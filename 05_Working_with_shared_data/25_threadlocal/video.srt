@@ -1,0 +1,246 @@
+1
+00:00:00,210 --> 00:00:08,670
+Hello there! In this video, we're going to talk about thread-local variables.
+C++ supports variables which
+
+2
+00:00:08,670 --> 00:00:09,730
+are thread-local.
+
+3
+00:00:10,140 --> 00:00:16,500
+We use the thread underscore local keyword to declare a variable as being local to a thread.
+
+4
+00:00:17,640 --> 00:00:23,460
+So these are quite similar to static variables. The difference is, with a static variable, you get a
+
+5
+00:00:23,460 --> 00:00:29,070
+single instance which is shared by all the threads.
+With a thread_local variable,
+
+6
+00:00:29,250 --> 00:00:30,990
+Each thread has its own instance.
+
+7
+00:00:35,260 --> 00:00:42,490
+We can declare thread-local variables anywhere that we can declare a static variable. We can declare them
+
+8
+00:00:42,490 --> 00:00:49,480
+at namespace scope, we can make them static data members of a class and we can make them local
+
+9
+00:00:49,480 --> 00:00:50,890
+variables in a function.
+
+10
+00:00:54,870 --> 00:01:01,260
+When they are at static and name space scope, they will be constructed at or before the first time they are
+
+11
+00:01:01,270 --> 00:01:02,850
+used in a translation unit.
+
+12
+00:01:03,810 --> 00:01:10,140
+And just to remind you, a translation unit is a source code file in which all the header files have
+
+13
+00:01:10,140 --> 00:01:11,970
+been included and preprocessed.
+
+14
+00:01:13,360 --> 00:01:18,700
+So that means they avoid the problems that can arise in Windows when you are sharing variables across
+
+15
+00:01:19,060 --> 00:01:21,690
+different translation units in a dynamic library.
+
+16
+00:01:23,550 --> 00:01:29,460
+Local variables, which are thread-local, are initialized in the same way as static local variables. There
+
+17
+00:01:29,460 --> 00:01:34,410
+will not be a data race, of course, because only one thread can access a thread-local variable.
+
+18
+00:01:36,550 --> 00:01:40,270
+Thread-local variables are destroyed when the thread function returns.
+
+19
+00:01:42,210 --> 00:01:48,390
+There is no guarantee about the order in which local variables are constructed, but they are destroyed
+
+20
+00:01:48,390 --> 00:01:50,940
+in the reverse order in which they were constructed.
+
+21
+00:01:55,110 --> 00:02:03,120
+One application of local variables: if we are using the C++11 features for random numbers, we can
+
+22
+00:02:03,120 --> 00:02:07,260
+arrange things so that each thread has its own access of a random number engine.
+
+23
+00:02:07,680 --> 00:02:12,640
+And if we do not seed the engine, or we use the same seed for all the engines, then that means that each
+
+24
+00:02:12,660 --> 00:02:15,210
+thread will generate the same sequence of random numbers.
+
+25
+00:02:15,570 --> 00:02:23,010
+And that's useful if you are testing. If you are not familiar with the C++11 random numbers, it is quite
+
+26
+00:02:23,010 --> 00:02:30,900
+different from the old rand() function from C. So we create an instance of the random number engine.
+
+27
+00:02:31,260 --> 00:02:36,570
+This has an overloaded function call operator, and every time you call that operator, you get
+
+28
+00:02:36,580 --> 00:02:38,340
+the next random number in the sequence.
+
+29
+00:02:39,570 --> 00:02:44,330
+Normally you use random numbers with a distribution which will scale the numbers.
+
+30
+00:02:44,910 --> 00:02:51,210
+In this case, we have a uniform distribution of real numbers which are doubles in the range from zero
+
+31
+00:02:51,210 --> 00:02:51,640
+to one.
+
+32
+00:02:52,140 --> 00:02:58,680
+So this avoids having to work out how to divide by RAND_MAX and add numbers and then worry about
+
+33
+00:02:58,680 --> 00:03:01,290
+whether you have introduced bias into the distribution.
+
+34
+00:03:02,190 --> 00:03:05,190
+This will always return uniformly distributed random numbers.
+
+35
+00:03:07,210 --> 00:03:09,820
+So in this case, we are creating the random number engine.
+
+36
+00:03:12,380 --> 00:03:18,410
+And then the distribution will also have a function call operator. Then every time we call that, we
+
+37
+00:03:18,410 --> 00:03:23,870
+give the number [engine] instance as the argument, and then that will get the next random number from the sequence
+
+38
+00:03:24,050 --> 00:03:26,390
+and it will scale it to fit into the distribution.
+
+39
+00:03:28,060 --> 00:03:34,480
+So we call it like that. We are going to call it 10 times, so it is going to generate ten random numbers
+
+40
+00:03:34,480 --> 00:03:35,740
+between zero and one.
+
+41
+00:03:37,180 --> 00:03:40,330
+I have got some code here which demonstrates this.
+
+42
+00:03:40,540 --> 00:03:43,300
+So this is the thread function from the slide.
+
+43
+00:03:45,010 --> 00:03:46,690
+I have got some headers.
+
+44
+00:03:48,430 --> 00:03:55,780
+I have also written a main function, which is going to create a thread and that will print out 10 random
+
+45
+00:03:55,780 --> 00:03:56,230
+numbers.
+
+46
+00:03:56,500 --> 00:03:59,810
+Then it creates another thread and prints out 10 numbers.
+
+47
+00:04:01,330 --> 00:04:03,070
+So let's see how that works.
+
+48
+00:04:06,190 --> 00:04:09,400
+So you can see that both threads are printing out the same random numbers.
+
+49
+00:04:09,880 --> 00:04:15,940
+The reason for this is this each thread has its own instance of the engine, which is not seeded.
+
+50
+00:04:16,480 --> 00:04:21,550
+So each thread is going to print out the first 10 numbers from the random engine's sequence.
+
+51
+00:04:22,300 --> 00:04:25,300
+Now, let's see what happens if we remove that.
+
+52
+00:04:26,350 --> 00:04:28,650
+So this is now just an ordinary global variable.
+
+53
+00:04:28,960 --> 00:04:30,460
+It is shared by all the threads.
+
+54
+00:04:31,420 --> 00:04:36,040
+So each time a thread calls it, it is going to get the next number from the sequence.
+
+55
+00:04:39,200 --> 00:04:44,530
+This time, the threads have different random numbers, so the first thread gets the first 10 random numbers,
+
+56
+00:04:45,170 --> 00:04:48,770
+then thread 2 is using the same random number engine.
+
+57
+00:04:49,460 --> 00:04:52,160
+So it gets the next 10 numbers from the sequence.
+
+58
+00:04:53,590 --> 00:05:00,460
+Before,  thread 2 was using its own instance of the random number engine, and that gave it the first 10 numbers of
+
+59
+00:05:00,460 --> 00:05:01,060
+the sequence.
+
+60
+00:05:02,290 --> 00:05:04,360
+OK, so that is it for this video.
+
+61
+00:05:04,750 --> 00:05:07,660
+I will see you next time, but meanwhile, keep coding!
+

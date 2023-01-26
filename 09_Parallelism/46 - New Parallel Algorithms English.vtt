@@ -1,0 +1,503 @@
+WEBVTT
+
+0
+00:00.180 --> 00:00.750
+Hello again!
+
+1
+00:01.020 --> 00:07.530
+In this video, we are going to look at new parallel algorithms. In the last video, we said that some
+
+2
+00:07.530 --> 00:12.930
+of the algorithm functions from <numeric> had to be rewritten to support execution policies.
+
+3
+00:13.260 --> 00:14.310
+So we are going to look at those.
+
+4
+00:14.590 --> 00:16.110
+The first one is accumulate.
+
+5
+00:17.840 --> 00:23.480
+This takes a range of iterators and an initial value.
+It will add the value of each element in the
+
+6
+00:23.480 --> 00:26.330
+range to that initial value and return the sum.
+
+7
+00:27.830 --> 00:31.470
+By default, the plus operator is used for performing the addition.
+
+8
+00:31.880 --> 00:37.570
+So if we have an initial value of zero,
+then we will get the sum of the values of all the elements.
+
+9
+00:38.860 --> 00:44.800
+We can also pass a callable object as an additional fourth argument, if we want to perform a different
+
+10
+00:44.800 --> 00:50.610
+operation.
+For example, if we want to get the product of the values of the elements, we could pass
+
+11
+00:50.620 --> 00:55.450
+one as the initial value and pass a callable object that performs multiplication.
+
+12
+00:57.940 --> 01:00.100
+So here is a simple example of accumulate.
+
+13
+01:01.000 --> 01:05.980
+We have a vector which we are going to perform the accumulate on.
+
+14
+01:07.300 --> 01:08.590
+Then we call accumulate.
+
+15
+01:08.590 --> 01:14.050
+We pass the elements, which is the entire vector in this case,
+and the initial value of zero.
+
+16
+01:14.320 --> 01:20.350
+And we expect that will give us the total of the value of the elements in the vector, which is 36.
+
+17
+01:24.700 --> 01:31.150
+The reason why accumulate had to be rewritten is to do with the way that it was specified.
+The specification
+
+18
+01:31.210 --> 01:37.400
+says that it must execute sequentially and also that the execution must be performed from left to right.
+
+19
+01:37.840 --> 01:42.190
+So if we have a vector with elements one, two, three, four,
+it will have to execute it
+
+20
+01:42.220 --> 01:47.830
+by doing one plus two, then add three to the result of that,
+then add four to the result of that and
+
+21
+01:47.830 --> 01:48.200
+so on.
+
+22
+01:49.180 --> 01:52.690
+This means that each addition must be complete before the next one can start.
+
+23
+01:53.080 --> 01:56.940
+So obviously that is not compatible with a parallel implementation.
+
+24
+01:58.750 --> 02:04.750
+It is also not compatible with a vectorized implementation,
+because vectorization means that the instructions
+
+25
+02:04.750 --> 02:10.420
+take more than two arguments,
+and the specification says that each operation can only take two arguments.
+
+26
+02:14.610 --> 02:18.360
+To overcome these problems, C++ provides a new function called reduce.
+
+27
+02:26.150 --> 02:29.210
+This works exactly the same way as accumulate.
+
+28
+02:31.410 --> 02:36.030
+The difference is that the execution is not guaranteed to be sequential or in left-to-right [order].
+
+29
+02:37.490 --> 02:40.290
+We can also apply a policy.
+
+30
+02:40.300 --> 02:42.870
+So let's try parallel and vectorized...
+
+31
+02:46.110 --> 02:47.690
+And there it is. OK?
+
+32
+02:51.050 --> 02:57.290
+So reduce will actually support all the execution policies.
+If we ask for sequential execution, then
+
+33
+02:57.290 --> 03:00.770
+it is just going to do it as one big sequence of additions.
+
+34
+03:02.170 --> 03:09.220
+If we ask for parallel execution, then it is going to break it down into four single additions,
+which
+
+35
+03:09.220 --> 03:10.980
+can all be performed at the same time.
+
+36
+03:12.720 --> 03:18.150
+So it will be one plus two and three plus four and five plus six and seven plus eight,
+and then combine
+
+37
+03:18.150 --> 03:19.530
+the results to get the answer.
+
+38
+03:20.940 --> 03:27.930
+If we ask for vectorized execution, then it will use an instruction which will add four numbers in a
+
+39
+03:27.930 --> 03:32.280
+single instruction and then add another four numbers in a single instruction.
+
+40
+03:32.850 --> 03:36.350
+And then we can do these vector executions in parallel.
+
+41
+03:36.660 --> 03:38.490
+So we have parallel and vectorized.
+
+42
+03:38.790 --> 03:42.770
+So we are doing two vectorized additions at the same time.
+
+43
+03:44.250 --> 03:49.200
+So we are doing one plus two plus three plus four in a single instruction and five plus six plus seven plus eight
+
+44
+03:49.200 --> 03:51.780
+as another separate instruction which can run at the same time.
+
+45
+03:56.800 --> 04:02.440
+When reduce has a parallel execution policy,
+it breaks the operations down into something that looks
+
+46
+04:02.440 --> 04:02.980
+like a tree.
+
+47
+04:03.550 --> 04:05.410
+So we have eight numbers that we want to add.
+
+48
+04:05.980 --> 04:12.040
+This is broken down into two additions of four numbers, and then each of those is broken down into
+
+49
+04:12.190 --> 04:13.980
+four additions of two numbers.
+
+50
+04:14.500 --> 04:18.280
+And then you cannot go any lower because you must have at least two numbers in an addition.
+
+51
+04:18.880 --> 04:24.030
+So all of these additions are going to be performed, then the results will be combined.
+
+52
+04:24.460 --> 04:30.130
+So the result, one and two will be combined with the result of three and four give the result of adding
+
+53
+04:30.400 --> 04:31.510
+one and two and three and four.
+
+54
+04:31.990 --> 04:36.700
+Then that will be combined with all the operations on the other side of the tree and then we get the
+
+55
+04:36.700 --> 04:37.450
+final results.
+
+56
+04:38.050 --> 04:39.910
+This is actually a very important concept
+
+57
+04:39.910 --> 04:45.310
+in parallel programming.
+You split the program up into lots of operations, which run separately at
+
+58
+04:45.310 --> 04:51.400
+the same time,
+and then you have a reduce step which will combine together all these partial results
+
+59
+04:51.730 --> 04:53.470
+and give you the final answer.
+
+60
+04:57.180 --> 05:03.150
+We said that the operations may not be performed in sequence.
+If we are performing addition it does not
+
+61
+05:03.150 --> 05:06.720
+matter,
+but if we are doing something like subtraction, then it is going to give the wrong answer.
+
+62
+05:07.110 --> 05:09.750
+So there are some restrictions on the operator we can use.
+
+63
+05:11.220 --> 05:16.860
+The operator must have some properties which are known by mathematicians as associativity and commutativity.
+
+64
+05:16.860 --> 05:19.410
+If it is commutative,
+
+65
+05:19.410 --> 05:21.090
+that means the order does not matter.
+
+66
+05:21.120 --> 05:23.280
+So two plus three is the same as three plus two.
+
+67
+05:24.540 --> 05:28.320
+If it is associative, then grouping operations together does not change the result.
+
+68
+05:29.580 --> 05:32.490
+This is true for adding integers, multiplying them.
+
+69
+05:32.640 --> 05:36.390
+It is not true for subtraction and is also not true for floating point.
+
+70
+05:40.580 --> 05:48.590
+Another function that was rewritten was partial_sum. This is used for populating a second vector.
+Each
+
+71
+05:48.590 --> 05:54.200
+element in the second vector is the sum of the corresponding elements so far in the first vector.
+
+72
+05:54.500 --> 05:59.850
+So if we have a vector one, two, three, four, the first element of the result will be one.
+
+73
+06:00.620 --> 06:02.300
+The second will be one plus two.
+
+74
+06:03.080 --> 06:04.940
+The third will be one plus two plus three.
+
+75
+06:04.940 --> 06:07.310
+And the fourth will be one plus two plus two plus four.
+
+76
+06:07.910 --> 06:10.010
+So each element in v2 contains "the sum
+
+77
+06:10.040 --> 06:11.180
+so far" from v1.
+
+78
+06:16.570 --> 06:23.020
+So here is an example. We have the same starting vector. We have another vector that we are going to
+
+79
+06:23.020 --> 06:29.380
+populate. In this case, I am making sure that the populated vector is the same size as the original vector.
+
+80
+06:29.390 --> 06:32.320
+So we are not going to have any problems with invalid element accesses.
+
+81
+06:32.920 --> 06:34.750
+You could also use a back_inserter
+
+82
+06:35.560 --> 06:40.300
+in this case.
+However, you cannot use a back_inserter with an execution policy.
+
+83
+06:40.750 --> 06:44.080
+So that is why I am doing it this way.
+We then call
+
+84
+06:44.080 --> 06:46.030
+partial_sum. We give the element range again.
+
+85
+06:46.480 --> 06:51.130
+That is all the elements in the first vector.
+And then the start of the target vector.
+
+86
+06:51.520 --> 06:54.250
+So we are going to start from the beginning of the second vector.
+
+87
+06:58.070 --> 07:04.370
+And then you can see that each element is the sum of the elements so far.
+So the first one is one, the
+
+88
+07:04.370 --> 07:06.080
+second element is one plus two.
+
+89
+07:06.680 --> 07:09.520
+The third element is one plus two plus three and so on.
+
+90
+07:09.800 --> 07:12.230
+And the last element is the sum of all the elements.
+
+91
+07:17.100 --> 07:22.770
+There are actually two different algorithms which replace partial_sum.
+One is inclusive_scan.
+
+92
+07:25.680 --> 07:33.660
+So this does exactly the same as partial sum, except it supports policies.
+So we can put a policy in
+
+93
+07:33.660 --> 07:33.950
+here.
+
+94
+07:39.600 --> 07:40.500
+And that all works.
+
+95
+07:46.070 --> 07:50.930
+The other C++17 version of partial_sum is called exclusive_scan.
+
+96
+07:51.500 --> 07:53.020
+This is a bit more complicated.
+
+97
+07:53.420 --> 07:59.960
+It excludes the current element from the sum,
+but it also adds an extra element which is supplied
+
+98
+07:59.960 --> 08:01.220
+as a fourth argument.
+
+99
+08:04.380 --> 08:08.260
+So in this case, we're calling exclusive scan with a fourth argument of minus one.
+
+100
+08:09.450 --> 08:15.000
+We have this vector here, but it is actually going to be treated as though it was like this,
+with the
+
+101
+08:15.000 --> 08:18.510
+first element, minus one, and then last element has been dropped.
+
+102
+08:21.660 --> 08:23.230
+This is probably a bit hard to understand.
+
+103
+08:23.550 --> 08:26.100
+I think the best way to explain it is to show the output.
+
+104
+08:30.370 --> 08:37.600
+So the first element is the imaginary first element, minus one.
+The second element is the sum of minus
+
+105
+08:37.600 --> 08:44.860
+one and the actual first element, which gives zero.
+And we add zero, two. And three is five, five and
+
+106
+08:45.190 --> 08:50.200
+four is nine and so on. 
+It is the same as if we did an inclusive_scan...
+
+107
+08:52.970 --> 08:57.140
+of this vector. So the first element has been replaced by minus one.
+
+108
+08:57.380 --> 09:00.170
+The rest have been shuffled along and the last element has been dropped.
+
+109
+09:02.330 --> 09:06.380
+(So if I change the printed output!)
+
+110
+09:10.940 --> 09:15.890
+So the first element is minus one, second element is minus one plus one,
+third element is those plus
+
+111
+09:15.890 --> 09:19.640
+two, fourth element plus three, fifth plus four and so on.
+
+112
+09:20.960 --> 09:24.280
+But the best way to appreciate this is to experiment with it yourselves.
+
+113
+09:27.160 --> 09:32.260
+It may seem rather a strange thing to do, but it is actually very useful in numeric programming.
+
+114
+09:37.760 --> 09:38.420
+There it is again.
+
+115
+09:39.530 --> 09:41.600
+OK, so that's it for this video.
+
+116
+09:41.810 --> 09:42.750
+I'll see you next time.
+
+117
+09:42.770 --> 09:44.750
+But meanwhile, keep coding!

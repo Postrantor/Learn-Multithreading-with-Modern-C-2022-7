@@ -1,0 +1,448 @@
+1
+00:00:00,180 --> 00:00:00,780
+Hello again.
+
+2
+00:00:01,020 --> 00:00:07,500
+In this video, we are going to look at the lock_guard class in the standard library. This solves one
+
+3
+00:00:07,500 --> 00:00:09,450
+of the problems with mutexes.
+
+4
+00:00:11,890 --> 00:00:18,280
+The problem is that if an exception is thrown in the critical region, the mutex is left locked.
+
+5
+00:00:19,300 --> 00:00:20,470
+So let's have a look at that.
+
+6
+00:00:22,710 --> 00:00:29,280
+So this is the code that we had before. When the thread goes into the loop, it looks the mutex.
+
+7
+00:00:30,830 --> 00:00:35,960
+It can display its output without having any other thread interfere with this, and then it unlocks
+
+8
+00:00:35,960 --> 00:00:38,930
+the mutex, which will allow some other thread to run.
+
+9
+00:00:40,450 --> 00:00:42,940
+So what happens if we throw an exception in here?
+
+10
+00:00:49,110 --> 00:00:49,450
+Right.
+
+11
+00:00:49,470 --> 00:00:50,310
+Well, that is not very good!
+
+12
+00:00:50,340 --> 00:00:51,990
+The program has been terminated.
+
+13
+00:00:54,110 --> 00:00:58,250
+So we can see that one thread has managed to do one line of output.
+
+14
+00:01:00,440 --> 00:01:05,270
+What has happened is that the first thread to run has gone into the loop. It has locked its mutex,
+
+15
+00:01:05,630 --> 00:01:09,020
+it has done its output, and then the exception is thrown.
+
+16
+00:01:09,710 --> 00:01:13,520
+When that happens, the destructors are called for all the objects in the scope.
+
+17
+00:01:14,580 --> 00:01:20,580
+Well, there are not really any, except for the variable i, I suppose. And then the thread will jump out
+
+18
+00:01:20,580 --> 00:01:23,130
+of the loop and look for an exception handler.
+
+19
+00:01:24,670 --> 00:01:25,270
+There aren't any.
+
+20
+00:01:25,300 --> 00:01:29,080
+So the thread is terminated and that causes the entire program to terminate.
+
+21
+00:01:30,670 --> 00:01:32,830
+So let's put in an exception handler.
+
+22
+00:01:44,720 --> 00:01:48,560
+Okay, well, the program is still running, but it is not doing very much.
+
+23
+00:01:52,740 --> 00:02:00,150
+So what happened this time, was that the first thread to run locked the mutex. It did some output, the exception
+
+24
+00:02:00,210 --> 00:02:03,900
+was thrown, the thread that jumped into the catch handler.
+
+25
+00:02:05,210 --> 00:02:13,100
+The problem is that the threat did not call unlock, so this mutex is still locked and all the threads
+
+26
+00:02:13,100 --> 00:02:16,550
+which are waiting for a lock on that mutex are going to be waiting forever.
+
+27
+00:02:17,480 --> 00:02:23,140
+The program is deadlocked because nothing can happen until this thread unlocks the mutex.
+
+28
+00:02:23,540 --> 00:02:26,870
+But this thread has stopped running, so it cannot unlock the mutex.
+
+29
+00:02:29,000 --> 00:02:33,680
+Okay, so the obvious way to do this is to unlock the mutex in the catch handler.
+
+30
+00:02:35,900 --> 00:02:37,760
+So let's see what effect that has.
+
+31
+00:02:41,060 --> 00:02:47,470
+OK, so the program is now run and successfully completed - or some values of "successfully" anyway!
+
+32
+00:02:48,440 --> 00:02:50,300
+Each thread has run once.
+
+33
+00:02:53,090 --> 00:03:00,110
+The first thread to run locks the mutex and prints some output, then the exception is thrown and in the exception
+
+34
+00:03:00,110 --> 00:03:06,620
+handler, it unlocks the mutex. Then the next thread can run and the same thing happens again.
+
+35
+00:03:07,550 --> 00:03:09,730
+That throws an exception and unlocks the mutex.
+
+36
+00:03:09,740 --> 00:03:13,970
+Then the third thread runs and - same problem again.
+
+37
+00:03:15,110 --> 00:03:22,130
+We only get one output because the handler is outside the loop. So we could move the handler inside
+
+38
+00:03:22,130 --> 00:03:22,550
+the loop.
+
+39
+00:03:29,190 --> 00:03:30,340
+(Now let's see what happens)
+
+40
+00:03:32,230 --> 00:03:40,120
+OK, so each thread has been able to execute all the outputs in its loop, and then if we remove this
+
+41
+00:03:40,120 --> 00:03:45,100
+print statement, then we should get what looks like a normal output.
+
+42
+00:03:45,490 --> 00:03:46,270
+Yes, there we go.
+
+43
+00:03:46,780 --> 00:03:48,690
+OK, so we have solved the problem.
+
+44
+00:03:51,780 --> 00:03:56,790
+So the problem again, the mutex is not unlocked if an exception is thrown.
+
+45
+00:03:58,880 --> 00:04:01,610
+All the threads which are waiting to acquire the lock will be blocked.
+
+46
+00:04:02,660 --> 00:04:05,000
+main() is joined on the blocked threads.
+
+47
+00:04:05,270 --> 00:04:08,780
+So main() is going to be blocked as well, so the whole program is deadlocked.
+
+48
+00:04:12,090 --> 00:04:18,600
+So this is a problem with the mutex. Whenever we call lock(), we must put in a corresponding call to
+
+49
+00:04:18,600 --> 00:04:22,350
+unlock(), either in the code or an exception handler.
+
+50
+00:04:23,770 --> 00:04:29,980
+If we have code which has many different return paths, then they all have to have an unlock() and we have
+
+51
+00:04:29,980 --> 00:04:31,510
+to be careful not to unlock twice.
+
+52
+00:04:32,990 --> 00:04:37,580
+So this is why programmers do not normally use the mutex directly.
+
+53
+00:04:40,490 --> 00:04:46,400
+There are some classes in the standard library which we can use to wrap the mutex, and these follow the
+
+54
+00:04:46,400 --> 00:04:55,530
+RAII idiom for managing resources, "Resource Allocation Is Initialization", which means that we allocate
+
+55
+00:04:55,550 --> 00:04:59,830
+the resource in the constructor and we release it in the destructor.
+
+56
+00:05:00,880 --> 00:05:09,310
+Some examples you may have met are the fstream for managing files, unique_ptr for managing allocated
+
+57
+00:05:09,310 --> 00:05:09,730
+memory.
+
+58
+00:05:10,480 --> 00:05:14,700
+In both cases, the file is opened in the constructor and closed in the destructor.
+
+59
+00:05:15,160 --> 00:05:20,150
+The memory is allocated by the unique_ptr constructor and released in the destructor.
+
+60
+00:05:20,920 --> 00:05:24,760
+In this case, the resource that the class manages is a lock on a mutex.
+
+61
+00:05:26,270 --> 00:05:33,410
+The constructor will take the mutex object as its argument and it will lock it and the destructor will
+
+62
+00:05:33,410 --> 00:05:34,010
+unlock it.
+
+63
+00:05:35,290 --> 00:05:40,810
+If we create an object of one of these classes as a local variable, that means that the mutex will
+
+64
+00:05:40,810 --> 00:05:43,930
+be automatically unlocked when the object goes out of scope.
+
+65
+00:05:46,160 --> 00:05:47,870
+If an exception is thrown,
+
+66
+00:05:48,930 --> 00:05:55,290
+Or you have 57 different return paths from your thread function and someone adds a 58th, then the
+
+67
+00:05:55,320 --> 00:05:56,850
+mutex will always be unlocked.
+
+68
+00:06:00,130 --> 00:06:07,510
+The first wrapper class we are going to look at is lock_guard. This is a very basic wrapper class. It only
+
+69
+00:06:07,510 --> 00:06:14,620
+has two member functions, the constructor and the destructor which lock and unlock the mutex. We need
+
+70
+00:06:14,620 --> 00:06:22,930
+to give the type of the mutex as a parameter to the lock_guard, unless we're using C++ 17, in which
+
+71
+00:06:22,930 --> 00:06:24,510
+case the compiler can work it out.
+
+72
+00:06:25,030 --> 00:06:30,640
+So we just put lock_guard, the name of the variable and the mutex argument.
+
+73
+00:06:34,200 --> 00:06:40,530
+So we do not need to put an explicit lock() and unlock() calls to the mutex, we just create a lock_guard
+
+74
+00:06:40,770 --> 00:06:47,390
+instance and we pass the mutex as its argument, and then we do that just before the critical region.
+
+75
+00:06:48,210 --> 00:06:53,250
+And then when we get to the end of the scope, the local variable will be destroyed.
+
+76
+00:06:53,280 --> 00:06:55,950
+The destructor is called and that will unlock the mutex.
+
+77
+00:06:56,950 --> 00:06:58,080
+Let's try this out.
+
+78
+00:06:59,960 --> 00:07:01,630
+There we are. Lovely!
+
+79
+00:07:03,290 --> 00:07:08,900
+So when we create the lock_guard instance here, that will lock the mutex and then that will mean that the critical
+
+80
+00:07:08,900 --> 00:07:15,770
+region can only be executed by this thread, and then the mutex will always be unlocked, even if we
+
+81
+00:07:15,770 --> 00:07:16,580
+throw an exception...
+
+82
+00:07:30,620 --> 00:07:31,370
+So there it is.
+
+83
+00:07:31,820 --> 00:07:38,840
+We do not need to do anything in the exception handler concerning the mutex. When the exception is thrown,
+
+84
+00:07:39,020 --> 00:07:42,980
+the destructor is called for the lock_guard and that unlocks the mutex.
+
+85
+00:07:43,440 --> 00:07:47,600
+So the mutex has always been unlocked by the time we get to the catch handler.
+
+86
+00:07:50,620 --> 00:07:55,240
+So there we are again: when it goes out of scope, the destructor is called and the mutex is unlocked without
+
+87
+00:07:55,240 --> 00:08:01,180
+any extra work by the programmer. Which is always good news. If you can get the compiler or the library
+
+88
+00:08:01,180 --> 00:08:02,030
+to do work for you,
+
+89
+00:08:02,050 --> 00:08:02,970
+that is always a good thing.
+
+90
+00:08:04,420 --> 00:08:10,480
+There is just one problem with that, actually, if we go back and look at this again, the mutex is
+
+91
+00:08:10,480 --> 00:08:12,520
+not unlocked until the end of the scope.
+
+92
+00:08:12,790 --> 00:08:19,630
+So this means that we're locking the mutex while we are sleeping. While we have the lock on the
+
+93
+00:08:19,630 --> 00:08:23,970
+mutex no other thread can execute this critical section.
+
+94
+00:08:24,430 --> 00:08:27,670
+So we are basically shutting out all the other threads while we're sleeping.
+
+95
+00:08:28,600 --> 00:08:35,260
+That is one issue with lock_guard. We will look in the next video at another wrapper which solves that problem.
+
+96
+00:08:37,360 --> 00:08:43,650
+In C++17, there is a scoped_lock, which is exactly the same. The only difference is it can lock
+
+97
+00:08:43,660 --> 00:08:45,540
+more than one mutex at the same time.
+
+98
+00:08:46,680 --> 00:08:51,760
+So we can create a scoped_lock and give it several mutexes and it will lock them.
+
+99
+00:08:52,710 --> 00:08:57,720
+You notice that we don't give the template parameter here because this is C++17.
+
+100
+00:08:59,760 --> 00:09:05,670
+The mutexes are always locked in the order that they are given in the constructor call, which is very useful.
+
+101
+00:09:06,990 --> 00:09:08,210
+We will see later on
+
+102
+00:09:08,250 --> 00:09:13,590
+that another way to create deadlock is to have threads locking mutexes in different orders.
+
+103
+00:09:15,080 --> 00:09:20,570
+In the structure, the mutexes will be unlocked and they will be unlocked in the reverse order that
+
+104
+00:09:20,570 --> 00:09:21,290
+they were locked in.
+
+105
+00:09:22,610 --> 00:09:29,570
+So this can avoid a lot of problems that can occur when you are dealing with multiple mutexes. Just
+
+106
+00:09:29,570 --> 00:09:32,720
+one thing to watch out for when you are using scoped_lock.
+
+107
+00:09:33,530 --> 00:09:38,840
+If you are using it with just one mutex argument, it is easy to forget to put the argument in.
+
+108
+00:09:40,280 --> 00:09:43,430
+So we get that which is all perfectly fine, but it does not actually lock anything.
+
+109
+00:09:44,060 --> 00:09:46,430
+So you may get a data race where you were not expecting one.
+
+110
+00:09:48,080 --> 00:09:49,520
+Okay, that's it for this video.
+
+111
+00:09:49,610 --> 00:09:50,450
+I will see you next time.
+
+112
+00:09:50,460 --> 00:09:52,550
+But meanwhile, keep coding!
+

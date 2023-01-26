@@ -1,0 +1,583 @@
+WEBVTT
+
+0
+00:00.090 --> 00:00.690
+Hello again!
+
+1
+00:00.870 --> 00:07.890
+In this video, we are going to talk about execution policies. Execution policies are applied to standard
+
+2
+00:07.890 --> 00:08.550
+algorithms.
+
+3
+00:08.850 --> 00:11.370
+These algorithms were introduced in C++98.
+
+4
+00:12.150 --> 00:16.890
+They are a set of functions which can be called on containers and sequences of data.
+
+5
+00:17.760 --> 00:24.720
+These algorithms implement classic computer science techniques such as searching, sorting, populating
+
+6
+00:24.720 --> 00:29.850
+containers, copying elements from one container to another, reordering the elements and so on.
+
+7
+00:30.870 --> 00:36.540
+Most of these algorithms are in the <algorithm> header.
+Although just to catch you out, they put a few
+
+8
+00:36.540 --> 00:37.680
+in the <numeric> header.
+
+9
+00:38.770 --> 00:44.110
+Usually when you call an algorithm, you give it an iterator range,
+which corresponds to the
+
+10
+00:44.110 --> 00:47.750
+sequence of elements you want the algorithm to be applied to.
+
+11
+00:49.220 --> 00:54.470
+You can also pass an optional extra argument, which is a callable object, and that function
+
+12
+00:54.470 --> 00:56.960
+will be applied to the elements in the sequence.
+
+13
+00:58.540 --> 01:03.450
+When an algorithm executes, it, performs a series of operations on the elements of the container.
+
+14
+01:03.640 --> 01:09.880
+It may modify them, swap them around, compare them, pass them as arguments to a function call 
+and so
+
+15
+01:09.880 --> 01:10.090
+on.
+
+16
+01:14.220 --> 01:21.120
+When algorithms came in in 1998, most computers only provided one way of executing code, but now
+
+17
+01:21.120 --> 01:22.590
+we have four to choose from.
+
+18
+01:23.550 --> 01:29.580
+The first one is sequential, in which we have a single instruction which processes a single data item.
+
+19
+01:29.910 --> 01:32.190
+And this is the traditional C++ model.
+
+20
+01:33.140 --> 01:39.000
+For example, if you write a loop, it will process the first element, then it will process the second element
+
+21
+01:39.270 --> 01:40.860
+then it will process the third and so on.
+
+22
+01:41.190 --> 01:42.960
+All the elements are looked at in turn.
+
+23
+01:45.100 --> 01:47.210
+There is also vectorized execution.
+
+24
+01:47.680 --> 01:53.980
+This is when a single instruction processes several data items at the same time.
+For example, it is
+
+25
+01:53.980 --> 01:59.180
+possible to have a processor instruction that can add four integers in a single operation.
+
+26
+02:01.030 --> 02:03.040
+This requires support from the hardware.
+
+27
+02:03.490 --> 02:08.210
+It also requires that the data structure is suitable for vectorized processing.
+
+28
+02:08.680 --> 02:11.410
+So if you have an array or vector, that would be ideal.
+
+29
+02:11.830 --> 02:14.170
+If you have a map or multimap, maybe not.
+
+30
+02:15.970 --> 02:21.970
+There is also parallel execution in which several instructions each possess a single data item at the
+
+31
+02:21.970 --> 02:29.140
+same time.
+For example, instead of having one processor adding 16 numbers in sequence, we could have
+
+32
+02:29.140 --> 02:32.200
+eight processors which add up eight pairs of numbers.
+
+33
+02:34.930 --> 02:43.030
+This requires a suitable algorithm. An example of this would be a sorting algorithm where you split
+
+34
+02:43.030 --> 02:47.680
+the data into two halves and sort each half, then split each part of that into two parts and so on.
+
+35
+02:48.370 --> 02:50.290
+All these parts are sorted independently.
+
+36
+02:50.530 --> 02:54.630
+So they could be sorted on separate processors at the same time.
+
+37
+02:56.900 --> 03:02.270
+And then finally, you can really "go wild" and do both at the same time, so you can have parallel and
+
+38
+03:02.270 --> 03:03.580
+vectorized execution.
+
+39
+03:05.770 --> 03:12.520
+So you can have multiple processors, each of which is executing instructions which will process multiple
+
+40
+03:12.520 --> 03:14.410
+items of data in a single instruction.
+
+41
+03:16.380 --> 03:21.030
+And this will only work if you have the right algorithm, the right data structure and the right hardware.
+
+42
+03:24.670 --> 03:31.770
+C++17 added execution policies, and these allow us to say how we want an algorithm to be executed.
+
+43
+03:32.620 --> 03:35.740
+The choices all match the hardware that I just described.
+
+44
+03:36.280 --> 03:41.310
+The sequential means do not use any kind of parallel execution or vectorization.
+
+45
+03:41.320 --> 03:47.980
+So just sequential, the "good old-fashioned" way of executing things. par for using parallel execution.
+
+46
+03:48.610 --> 03:53.200
+par underscore unseq for using parallel and vectorized execution.
+
+47
+03:55.000 --> 04:01.660
+And then in C++20, they added the fourth possibility, unseq for using vectorized execution.
+
+48
+04:03.370 --> 04:05.740
+It is important to realize these are only requests.
+
+49
+04:06.370 --> 04:09.580
+It is a bit like the "inline" keyword. It could be ignored.
+
+50
+04:10.600 --> 04:15.580
+For example, if the hardware does not support parallel or vectorized execution, 
+then the compiler
+
+51
+04:15.580 --> 04:21.910
+will not generate those instructions.
+If there are not enough system resources available to do it efficiently.
+
+52
+04:22.150 --> 04:26.560
+For example, if the system cannot create any more threads, then you may be forced to run in a single
+
+53
+04:26.560 --> 04:26.870
+thread.
+
+54
+04:28.270 --> 04:33.820
+And also, if the C++ library you are using has not implemented the parallel or the vectorized version,
+
+55
+04:34.090 --> 04:35.770
+and there are quite a few gaps at the moment.
+
+56
+04:38.860 --> 04:44.500
+To actually specify a policy, we need to include the <execution> header,
+which defines all these policy
+
+57
+04:44.500 --> 04:51.090
+objects, and then we pass the appropriate object as the first document of the algorithm call.
+
+58
+04:51.850 --> 04:57.560
+So the traditional call is just to pass the iterator range.
+
+59
+04:57.580 --> 05:02.440
+So sort(v.begin(), v.end()) would give non-policy execution.
+
+60
+05:04.010 --> 05:11.520
+Then if we have seq as the first argument, that will give us sequential execution. par for parallel,
+
+61
+05:11.530 --> 05:14.580
+par_unseq to request parallel and vectorized execution.
+
+62
+05:15.490 --> 05:18.900
+And in C++20, we will be able to pass unseq as well.
+
+63
+05:24.220 --> 05:25.820
+So let's look at these in more detail.
+
+64
+05:27.270 --> 05:32.730
+With sequenced policy execution, all the operations in the algorithm execution are going to be performed
+
+65
+05:32.730 --> 05:36.720
+on a single thread and this will be the thread which calls the algorithm function.
+
+66
+05:38.500 --> 05:46.010
+The operations will not be interleaved, but they may not necessarily be executed in a specific order.
+
+67
+05:49.270 --> 05:54.730
+So here is some code in which we actually use the execution policies. 
+We are going to start off with
+
+68
+05:54.730 --> 06:01.030
+a traditional algorithm call, actually. We are going to use for_each(). This will take a range of iterators.
+
+69
+06:01.690 --> 06:04.630
+And then the third argument is a callable object.
+
+70
+06:05.380 --> 06:08.770
+And this will be called on every element in the range.
+
+71
+06:12.700 --> 06:19.540
+We have a vector with 2,000 elements, and in effect, we are going to populate the vector with values
+
+72
+06:19.540 --> 06:21.530
+from one up to 2,000.
+
+73
+06:23.530 --> 06:26.470
+So there we are, the final value is 2000.
+
+74
+06:26.540 --> 06:31.480
+So we have not had any data corruption, and all the numbers appear to be in order.
+
+75
+06:31.510 --> 06:32.590
+(I am not going to check all of them!)
+
+76
+06:37.640 --> 06:45.380
+So we have included the <execution> header, we are also using the execution namespace under std, and then if
+
+77
+06:45.380 --> 06:52.160
+we seq as the first argument, then we are requesting a sequential execution.
+
+78
+06:52.550 --> 06:53.810
+So let's try that.
+
+79
+06:57.330 --> 06:59.410
+So, again, the last element is 2,000.
+
+80
+06:59.430 --> 07:06.030
+There has not been any data corruption. The elements could be in a different order, but they look
+
+81
+07:06.030 --> 07:06.810
+as though they are [in order].
+
+82
+07:12.120 --> 07:17.070
+So when we use the sequential execution policy, the elements will always have the right values, but
+
+83
+07:17.100 --> 07:19.290
+they may not necessarily be in the right order.
+
+84
+07:20.340 --> 07:21.460
+It's a bit of a "Eric Morecambe".
+
+85
+07:21.510 --> 07:28.110
+If you have ever seen the Morecambe and Wise sketch with Andre Previn or "Andrew Preview", as they call him. If you
+
+86
+07:28.110 --> 07:29.890
+have no idea what I am talking about, just ignore it.
+
+87
+07:29.910 --> 07:30.930
+It is British humour.
+
+88
+07:35.530 --> 07:41.110
+When we ask for parallel execution, the executions are performed in parallel across a number of threads,
+
+89
+07:42.220 --> 07:49.140
+and this could include the thread that called the algorithm function. Within those operations, any
+
+90
+07:49.150 --> 07:52.840
+given operation is going to be run on the same thread for its entire duration.
+
+91
+07:54.280 --> 07:58.900
+So we are not going to get operations which are switched from one thread to another or from one processor
+
+92
+07:59.080 --> 08:05.530
+to another. Operations which are performed on the same thread will not be interleaved, but may not
+
+93
+08:05.530 --> 08:08.840
+necessarily be executed in a particular order.
+
+94
+08:10.510 --> 08:13.290
+And of course, we have operations on different threads.
+
+95
+08:13.300 --> 08:16.120
+So this means there is a possibility of data races.
+
+96
+08:19.560 --> 08:27.030
+So let's go back to our program and change this to par.
+We may not actually get a data race, but let's
+
+97
+08:27.030 --> 08:27.740
+give it a try.
+
+98
+08:30.610 --> 08:31.280
+Oh, right.
+
+99
+08:31.690 --> 08:32.360
+We did get one.
+
+100
+08:32.530 --> 08:35.010
+So the last element is 1752.
+
+101
+08:35.440 --> 08:37.000
+So there has been some corruption.
+
+102
+08:38.890 --> 08:40.960
+We are using this variable count.
+
+103
+08:43.180 --> 08:47.860
+It is being incremented in each operation, but these operations are being performed on different threads.
+
+104
+08:48.130 --> 08:51.810
+So it could be that different threads are seeing different values of count.
+
+105
+08:53.680 --> 08:55.930
+If we make that atomic, then it should work.
+
+106
+08:55.960 --> 08:56.380
+Okay...
+
+107
+09:09.990 --> 09:17.040
+Yes, there we are. The last value is 2,000. By the way, I should have mentioned, when you compile
+
+108
+09:17.040 --> 09:20.540
+this code make sure that your compiler is in C++17 mode.
+
+109
+09:21.360 --> 09:28.740
+So, for example, with Visual Studio, that is the project properties. And then Configuration, General
+
+110
+09:29.040 --> 09:31.370
+and then C++ language standards.
+
+111
+09:33.090 --> 09:35.430
+If you are using other compilers, it will be different, obviously.
+
+112
+09:35.430 --> 09:38.310
+But if you do not do that, it probably will not compile.
+
+113
+09:40.180 --> 09:45.790
+And then unsequenced execution. The operations are performed on a single thread, which will be the one
+
+114
+09:45.790 --> 09:46.870
+which called the algorithm.
+
+115
+09:48.610 --> 09:57.070
+So this is vectorization. Operations will not be interleaved, but may not necessarily be executed in
+
+116
+09:57.070 --> 09:58.140
+a particular order.
+
+117
+09:59.950 --> 10:06.940
+This time, we do not have to worry about data races, but we do have to worry about shared state. If there is
+
+118
+10:06.940 --> 10:11.370
+any interaction between elements or between threads, then that could cause a data race.
+
+119
+10:13.680 --> 10:21.380
+In particular, if we allocate or deallocate memory, that could cause a problem, and also mutexes, locks
+
+120
+10:21.390 --> 10:23.190
+and other forms of synchronization.
+
+121
+10:27.090 --> 10:34.190
+This is not actually supported in C++17. I do not think my compiler has C++20 support yet.
+
+122
+10:36.730 --> 10:37.920
+(It has a preview)
+
+123
+10:42.830 --> 10:43.790
+No, still no good.
+
+124
+10:44.460 --> 10:49.670
+Okay, maybe by the time that you watch this video that will work. I am planning actually to do another
+
+125
+10:50.120 --> 10:53.450
+concurrency course which goes into more depth and covers C++20.
+
+126
+10:53.450 --> 10:55.460
+But let's see how this one goes first.
+
+127
+10:56.720 --> 10:59.330
+And then finally, parallel, unsynchronized execution.
+
+128
+11:00.080 --> 11:05.300
+We have executions which are performed in parallel across a number of threads. Again, possibly including
+
+129
+11:05.300 --> 11:06.740
+the thread that called the algorithm.
+
+130
+11:07.970 --> 11:11.750
+And this time an operation can be migrated from one thread to another.
+
+131
+11:13.640 --> 11:19.880
+Operations which are performed on the same thread, may be interleaved and may not necessarily be executed
+
+132
+11:19.880 --> 11:20.970
+in a specific order.
+
+133
+11:21.770 --> 11:23.650
+And then the requirements are a combination of both.
+
+134
+11:23.990 --> 11:28.220
+We must avoid data races and we must also avoid modifying shared state.
+
+135
+11:32.370 --> 11:38.220
+So if we change that to par_unseq (and let's also make that a normal variable again)
+
+136
+11:47.160 --> 11:52.050
+So, again, we get the data race, so we have 1,982 instead of 2,000.
+
+137
+11:54.940 --> 12:01.210
+(So let's quickly make that atomic again before anyone notices!)
+
+138
+12:04.150 --> 12:05.150
+There we are, that is better.
+
+139
+12:05.440 --> 12:12.400
+So we go up to 2,000. And you will notice actually that the values are not necessarily in order.
+
+140
+12:13.690 --> 12:20.080
+So we have 1898, 1981, 1889, 1892, 1824, 1897.
+
+141
+12:24.980 --> 12:26.690
+OK, so that's it for this video.
+
+142
+12:26.750 --> 12:29.540
+I'll see you next time, but meanwhile, keep coding!

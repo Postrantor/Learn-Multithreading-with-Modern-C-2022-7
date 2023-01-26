@@ -1,0 +1,267 @@
+WEBVTT
+
+0
+00:00.150 --> 00:03.450
+Hello again! In this video, we are going to talk about thread pools.
+
+1
+00:05.320 --> 00:10.720
+The motivation for using a thread pool is that creating a thread has a lot of overhead.
+
+2
+00:11.410 --> 00:14.500
+The program has to create an execution stack for the thread.
+
+3
+00:15.100 --> 00:18.760
+It has to call an API function to get to the operating system.
+
+4
+00:20.040 --> 00:24.430
+The operating system has to create the data that it uses internally for managing the thread.
+
+5
+00:25.220 --> 00:31.110
+Then the scheduler has to execute the thread
+and then a context switch will occur to actually run the
+
+6
+00:31.110 --> 00:31.440
+thread.
+
+7
+00:33.750 --> 00:39.630
+The upshot of all this is that if we create a new thread to run a function instead of calling it directly,
+
+8
+00:39.930 --> 00:45.180
+it can easily take 10,000 times as many instructions to execute the function in the thread.
+
+9
+00:47.060 --> 00:51.980
+If we create a new thread every time we start a function, then that represents an awful lot of overhead.
+
+10
+00:52.340 --> 00:56.270
+So is there any way we can avoid that overhead, or at least reduce it?
+
+11
+00:58.560 --> 01:01.870
+The concept of a thread pool comes from the typing pool.
+
+12
+01:02.790 --> 01:08.850
+If we go back to - say - the 1950s when there were no computers in offices.
+People did not send emails,
+
+13
+01:09.120 --> 01:13.590
+they sent letters and memos on paper, and these had to be typed out by someone.
+
+14
+01:14.580 --> 01:20.130
+If you were an executive, you would have a secretary who would type out your letters and deal with all
+
+15
+01:20.130 --> 01:20.760
+your admin.
+
+16
+01:21.300 --> 01:27.150
+If you were at a less exalted level, then you would have to send your letter to the typing pool.
+The
+
+17
+01:27.150 --> 01:32.790
+typing pool that was a room full of typists who spent all day typing out other people's letters.
+
+18
+01:34.050 --> 01:40.260
+When you sent your work to the typing pool, it was put in a pile of pending work
+and then when a typist
+
+19
+01:40.260 --> 01:44.610
+became available, they would take the first item from the top of the pile and work on it.
+
+20
+01:45.510 --> 01:47.670
+So in that way, all the typists were kept busy.
+
+21
+01:47.670 --> 01:51.450
+Every time they finished one letter, they took another one and started working on that.
+
+22
+01:55.230 --> 01:58.290
+To implement a thread pool, we need two things.
+
+23
+01:59.560 --> 02:04.960
+The first one is a fixed size container of thread objects, which are all ready to run.
+
+24
+02:06.880 --> 02:10.810
+Usually, you would want to make this equal to the number of cores on the machine.
+
+25
+02:11.740 --> 02:16.140
+Presumably, we are using threads because we want to get the maximum performance from the hardware.
+
+26
+02:16.420 --> 02:22.060
+And if we have one thread for every processor, then all the processors on the machine are going to
+
+27
+02:22.060 --> 02:28.180
+be busy and we are going to get the maximum possible output.
+If we have more threads than there are cores,
+
+28
+02:28.180 --> 02:32.760
+then we are going to get task switching and context switching, which are going to slow things down.
+
+29
+02:34.650 --> 02:41.640
+The C++ library provides a function which allows you to find this out. It is in the std::thread namespace and it is
+
+30
+02:41.640 --> 02:43.500
+called hardware underscore concurrency.
+
+31
+02:44.220 --> 02:48.750
+If you call this, it will return the number of cores on the machine
+and that will tell you what
+
+32
+02:48.750 --> 02:50.610
+size to make your container of threads.
+
+33
+02:51.990 --> 02:55.320
+The other thing we need is a queue of task function objects.
+
+34
+02:56.760 --> 03:01.340
+So when users want to send a task to the thread pool, they will push it onto the queue.
+
+35
+03:02.880 --> 03:06.010
+Then the next thread object which becomes free, will pop
+
+36
+03:06.030 --> 03:08.220
+that task from the queue and execute it.
+
+37
+03:08.640 --> 03:13.640
+And then when it finishes that task, it will pop the next task off the front of the queue and so on.
+
+38
+03:17.060 --> 03:21.170
+The advantages of a thread pool are that it makes scaling very easy.
+
+39
+03:22.720 --> 03:28.780
+If you run your program on a different machine, which has more cores, then the thread pool will automatically
+
+40
+03:28.780 --> 03:31.270
+make use of all the available processor cores.
+
+41
+03:33.390 --> 03:36.210
+It also makes very efficient use of resources.
+
+42
+03:37.290 --> 03:38.700
+Threads are always busy.
+
+43
+03:39.030 --> 03:43.110
+The only time that threads are idle is if there is no work to do. Otherwise
+
+44
+03:43.110 --> 03:46.290
+they are constantly pulling tasks off the queue and executing them.
+
+45
+03:47.340 --> 03:49.200
+And we have one thread for every core.
+
+46
+03:49.210 --> 03:54.120
+So if the threads are busy all the time, then all the processor cores are going to be busy as
+
+47
+03:54.120 --> 03:54.390
+well.
+
+48
+03:54.600 --> 03:56.820
+And we are making the best use of the hardware.
+
+49
+03:58.590 --> 04:03.890
+Thread pools are ideally suited for short and simple tasks, which really do one thing.
+
+50
+04:04.440 --> 04:09.120
+In that case, the execution time for the function is going to be much smaller than the overhead
+
+51
+04:09.120 --> 04:10.690
+of creating a new thread.
+
+52
+04:11.550 --> 04:15.060
+So if you can reuse an existing thread, then you have saved a lot of time.
+
+53
+04:16.790 --> 04:22.280
+They are also best suited to tasks which do not block. If the task needs to perform input/output
+
+54
+04:22.280 --> 04:30.470
+or wait for another thread or lock a mutex, then that represents idle time when the processor is not
+
+55
+04:30.470 --> 04:31.310
+being fully used.
+
+56
+04:32.150 --> 04:37.550
+And it may be that the delay from blocking is considerably greater than the time saved by not starting
+
+57
+04:37.550 --> 04:38.060
+a new thread.
+
+58
+04:41.330 --> 04:48.230
+The biggest disadvantage to the thread pool is that the queue can affect performance. Adding and removing
+
+59
+04:48.230 --> 04:51.140
+task functions from the queue must be done in a safe way.
+
+60
+04:51.140 --> 04:52.760
+So that is going to add overhead.
+
+61
+04:55.020 --> 05:00.730
+And the queue can also become a bottleneck if tasks are being added to the queue faster than the threads can
+
+62
+05:00.760 --> 05:04.080
+remove them. In a full thread pool implementation,
+
+63
+05:04.110 --> 05:06.540
+you need to be very careful about how you write the queue.
+
+64
+05:08.590 --> 05:13.960
+In the next video, we are going to write a simple thread pool, but until then, keep coding!

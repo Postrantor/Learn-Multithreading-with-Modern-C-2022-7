@@ -1,0 +1,387 @@
+WEBVTT
+
+0
+00:00.240 --> 00:04.050
+Hello there! In this video, we are going to talk about asynchronous programming
+
+1
+00:06.540 --> 00:12.000
+Operations can be performed synchronously or asynchronously. When they are synchronous,
+
+2
+00:12.060 --> 00:17.240
+this means that when we start an operation, we wait until it finishes before we start the next one.
+
+3
+00:18.000 --> 00:20.400
+When we are doing asynchronous operations,
+
+4
+00:20.550 --> 00:22.580
+it means we can start another one straight away.
+
+5
+00:22.590 --> 00:25.330
+We do not need to wait for the first one to complete.
+
+6
+00:26.250 --> 00:31.460
+As an analogy, you can think of a synchronous operation as being like buying things in a shop.
+
+7
+00:32.010 --> 00:37.500
+If something goes wrong with your computer and you need a new part, then you go to the shop, you wait
+
+8
+00:37.500 --> 00:42.480
+to be served, you ask for the part, you agree to buy it, you pay for it.
+
+9
+00:42.690 --> 00:49.530
+Then you come home and then you can plug in the new part and use your computer. With an asynchronous
+
+10
+00:49.530 --> 00:50.100
+operation,
+
+11
+00:50.940 --> 00:56.030
+you would do some clicks, then you would go away and do something else which does not involve your computer
+
+12
+00:56.340 --> 01:02.910
+(if there is such a thing!)
+And then some time later on, the part will arrive and then you can plug
+
+13
+01:02.910 --> 01:03.870
+it into your computer.
+
+14
+01:05.880 --> 01:10.100
+So you can go in and do other things without waiting for the computer parts to arrive.
+
+15
+01:13.720 --> 01:18.550
+In synchronous programming, if we start a new task to do some work, then our current task will
+
+16
+01:18.550 --> 01:22.060
+have to stop and wait until the new task completes.
+
+17
+01:23.170 --> 01:29.230
+For example, we could do some work, then request data from the database, so we start a new task which
+
+18
+01:29.230 --> 01:30.740
+will fetch the data.
+
+19
+01:31.660 --> 01:33.530
+Then we wait for the data.
+
+20
+01:34.390 --> 01:40.270
+Then this task will complete and then we get the data and then we can continue with the next stage in
+
+21
+01:40.270 --> 01:40.840
+our program.
+
+22
+01:45.150 --> 01:53.790
+An example of a synchronous task is a normal C++ function call. For example, if we call a member
+
+23
+01:53.820 --> 02:00.930
+function to save some data in a file, we stop and wait until the function returns.
+And then we execute
+
+24
+02:00.930 --> 02:03.380
+the next operation in the program.
+
+25
+02:04.650 --> 02:11.070
+We have to stop and wait for this to complete, even if we go on to do something that does not actually
+
+26
+02:11.070 --> 02:12.570
+rely on the data being saved.
+
+27
+02:15.270 --> 02:21.090
+So this time that we stop and wait for the data is "dead" time really, and this reduces the throughput
+
+28
+02:21.090 --> 02:21.780
+of the program.
+
+29
+02:22.740 --> 02:29.640
+If we have a GUI application, then the program will not be able to process user events and the program
+
+30
+02:29.640 --> 02:30.920
+will appear unresponsive.
+
+31
+02:32.370 --> 02:38.910
+If we are writing a server application, clients will notice that the website is getting slow or they
+
+32
+02:38.920 --> 02:40.860
+may even not be able to connect.
+
+33
+02:44.630 --> 02:50.480
+When we start a task asynchronously, it will continue to run in the background while we can carry on
+
+34
+02:50.540 --> 02:52.260
+doing our current task.
+
+35
+02:52.790 --> 02:59.720
+So in the database example, we would start a new task which requests the data. Then we would carry on in the
+
+36
+02:59.720 --> 03:01.670
+current task and do some more work.
+
+37
+03:02.120 --> 03:08.930
+And then at some point we would get the data from the database.
+And we can carry on doing work in our
+
+38
+03:08.960 --> 03:14.710
+original task so long as we do not actually need the data.
+So we can process GUI events, handle client
+
+39
+03:14.720 --> 03:15.650
+connections and so on.
+
+40
+03:17.090 --> 03:21.590
+When we get to the point where we really cannot manage without it, we have to stop and wait.
+
+41
+03:21.860 --> 03:27.770
+So if we ordered our computer parts online and this has not arrived yet, we just have to sit in front
+
+42
+03:27.770 --> 03:29.140
+of our computer and wait for it.
+
+43
+03:30.650 --> 03:34.910
+On the other hand, if the data is already available, we can continue without stopping.
+
+44
+03:35.900 --> 03:38.990
+If the part has arrived, we can just plug it in and carry on.
+
+45
+03:42.120 --> 03:48.330
+As an example of an asynchronous task, we could save the data to file asynchronously.
+
+46
+03:49.330 --> 03:54.850
+And then we can carry on executing instructions in our own task while the disks are spinning around.
+
+47
+03:57.320 --> 04:02.540
+At some point, we may need to check whether the asynchronous operation is completed or we may need
+
+48
+04:02.540 --> 04:03.670
+to get some results from it.
+
+49
+04:06.600 --> 04:12.240
+When we are writing threaded programs, we try to avoid blocking (when the thread has to stop and wait).
+
+50
+04:12.660 --> 04:16.500
+This reduces the throughput and responsiveness of the thread which is being blocked.
+
+51
+04:16.980 --> 04:20.910
+And also any threads which are joined on that thread are also going to be blocked.
+
+52
+04:22.090 --> 04:24.660
+Blocking in a critical section is particularly bad.
+
+53
+04:25.240 --> 04:30.250
+Any other threads which wants to execute that critical section are going to be blocked as well.
+
+54
+04:31.350 --> 04:36.450
+And if we are using locks to protect the critical section, then there is the risk of deadlock.
+
+55
+04:37.680 --> 04:42.810
+If we use asynchronous programming techniques, we can reduce the need for threads to block.
+
+56
+04:44.210 --> 04:46.290
+We cannot actually avoid it completely.
+
+57
+04:46.310 --> 04:51.920
+It may be that the asynchronous operation does not complete in time, so we have to stop and wait for
+
+58
+04:51.920 --> 04:52.130
+it.
+
+59
+04:53.200 --> 04:58.950
+But even in that case, we can at least get some work done instead of just sitting there and idly waiting.
+
+60
+05:02.100 --> 05:07.560
+When we have operations that block, they are synchronized by mutexes or operations on atomic
+
+61
+05:07.560 --> 05:08.130
+variables.
+
+62
+05:09.740 --> 05:15.740
+A thread will remain blocked until another thread unlocks the mutex that it is waiting for,
+or completes an
+
+63
+05:15.740 --> 05:21.860
+operation on an atomic variable that it wants to access. When we have non-blocking operations,
+
+64
+05:22.130 --> 05:24.380
+these are synchronized by message queues.
+
+65
+05:25.940 --> 05:28.530
+The threads will push a message onto a queue.
+
+66
+05:28.910 --> 05:30.670
+This is a concurrency queue, so
+
+67
+05:30.680 --> 05:31.160
+it is thread-safe.
+
+68
+05:32.390 --> 05:35.200
+Each of these messages is processed as it comes off the queue.
+
+69
+05:35.840 --> 05:39.560
+Then the threads which pushed the messages will continue running without waiting.
+
+70
+05:42.040 --> 05:47.920
+So, in effect, each thread is sending an order to Amazon and Amazon is processing the orders as they
+
+71
+05:47.920 --> 05:48.340
+come in.
+
+72
+05:49.860 --> 05:57.030
+This is often implemented by using messages which consist of callable objects,
+and the message processing
+
+73
+05:57.390 --> 06:00.690
+involves invoking that callable object as a thread.
+
+74
+06:04.040 --> 06:10.820
+Unfortunately, writing a safe and efficient concurrent queue with multiple consumers and producers
+
+75
+06:10.820 --> 06:11.720
+is very difficult.
+
+76
+06:12.380 --> 06:14.120
+C++ does not have one yet.
+
+77
+06:14.330 --> 06:16.120
+It is not going to be in C++ 20,
+
+78
+06:16.130 --> 06:24.080
+unfortunately.
+There are implementations in various libraries, including Boost, Microsoft's parallel
+
+79
+06:24.080 --> 06:27.870
+processing library and Intel's thread building blocks.
+
+80
+06:29.190 --> 06:33.490
+We are also going to have a go at writing one later in this course, although it will be a bit simpler.
+
+81
+06:37.310 --> 06:43.700
+Finally, we can also use asynchronous programming techniques for parallel operations.
+For example,
+
+82
+06:44.030 --> 06:47.060
+computations involving large arrays or matrixes.
+
+83
+06:49.110 --> 06:54.780
+So we start some new threads which all perform the same task, but give them different parts of the
+
+84
+06:54.780 --> 06:56.010
+data to operate on.
+
+85
+06:57.880 --> 07:03.310
+Then when each thread completes the task, we collect its results and then we go through and combine
+
+86
+07:03.310 --> 07:06.040
+all these partial results to get the final answer.
+
+87
+07:08.310 --> 07:14.400
+One other point: asynchronous programming is not thread specific.
+There are asynchronous programming techniques
+
+88
+07:14.400 --> 07:16.230
+which can be used in single-threaded programs.
+
+89
+07:17.160 --> 07:23.820
+Even in old MS-DOS you could print something out in the background,
+but that is getting away from
+
+90
+07:23.890 --> 07:24.480
+threads really.
+
+91
+07:25.800 --> 07:27.210
+OK, so that's all for this video.
+
+92
+07:27.540 --> 07:28.610
+I'll see you next time.
+
+93
+07:28.620 --> 07:30.660
+But meanwhile, keep coding!

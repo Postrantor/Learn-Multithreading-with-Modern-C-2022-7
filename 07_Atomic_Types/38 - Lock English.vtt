@@ -1,0 +1,407 @@
+WEBVTT
+
+0
+00:00.180 --> 00:00.750
+Hello again!
+
+1
+00:00.990 --> 00:03.990
+In this video, we are going to talk about lock-free programming.
+
+2
+00:06.300 --> 00:12.960
+A lock-free program is one in which threads can safely execute critical sections without needing help from
+
+3
+00:12.960 --> 00:15.420
+the operating system to provide locks.
+
+4
+00:18.390 --> 00:25.500
+A lock-free programs can avoid or at least reduce some of the drawbacks to using locks.
+We have seen you
+
+5
+00:25.500 --> 00:31.830
+can get a race condition, if you do not lock or if you use the wrong mutex.
+If you have multiple
+
+6
+00:31.920 --> 00:34.170
+mutexes there is the risk of deadlock.
+
+7
+00:36.030 --> 00:40.920
+Something we have not mentioned - I don't think - is the overhead of using mutexes.
+
+8
+00:41.280 --> 00:44.000
+Mutexes are actually managed by the operating system.
+
+9
+00:44.520 --> 00:50.310
+So when a program locks or unlocks a mutex, it has to make a call to the operating system.
+
+10
+00:50.670 --> 00:52.020
+It will stop running its own code.
+
+11
+00:52.560 --> 00:54.810
+It will wait for the operating system to respond.
+
+12
+00:55.050 --> 01:00.630
+And then the operating system will need to update some of its internal data structures before the program
+
+13
+01:00.630 --> 01:01.370
+can continue.
+
+14
+01:03.460 --> 01:08.230
+If we have a linked list with one mutex which is used for every access, then that means that
+
+15
+01:08.230 --> 01:12.570
+only one thread can access any element in that list at any one time.
+
+16
+01:13.210 --> 01:18.250
+And that reduces the scalability because in effect,
+when the program accesses that list, it becomes
+
+17
+01:18.250 --> 01:19.390
+a single threaded program.
+
+18
+01:21.120 --> 01:27.540
+At the opposite extreme, if we have fine-grained locking in a linked list, we lock the element
+
+19
+01:27.540 --> 01:32.790
+and the ones surrounding it, that will make the program much more complex and add more overhead because
+
+20
+01:32.790 --> 01:33.990
+we are doing all this locking.
+
+21
+01:37.270 --> 01:43.300
+Using locks also affects composability. If you have a function which takes a lock, then you should not
+
+22
+01:43.300 --> 01:47.230
+call any functions which might take a lock, even if it is a different mutex.
+
+23
+01:50.220 --> 01:56.880
+The great advantage of lock-free programming is, if you do it correctly, threads can never get blocked.
+Unless
+
+24
+01:56.880 --> 02:01.650
+they actually want to. You cannot have deadlock or livelock because there are not any locks.
+
+25
+02:03.280 --> 02:08.020
+If a thread is blocked, waiting for a resource, other threads can still continue to execute.
+
+26
+02:09.510 --> 02:14.790
+And this is very useful if you have work that must be done within a fixed time limit. For example,
+
+27
+02:14.790 --> 02:20.300
+real time systems where something has to be done in the next so many milliseconds or by a certain time.
+
+28
+02:22.840 --> 02:28.360
+Some applications where this is useful: double-checked locking, reference counters and spin locks.
+
+29
+02:32.680 --> 02:37.600
+One way you can think about programming with and without locks is to think about traffic intersections.
+
+30
+02:38.020 --> 02:44.710
+So the traffic junction corresponds to the critical section and the actual different vehicles in the
+
+31
+02:44.710 --> 02:46.710
+traffic correspond to different threads.
+
+32
+02:47.320 --> 02:51.130
+Obviously, all these vehicles want to get through the intersection as quickly as possible.
+
+33
+02:51.130 --> 02:53.790
+But if they try to do that, there will be a horrible collision.
+
+34
+02:56.590 --> 03:02.470
+One way to do this is to have traffic lights or a policeman who will control access. Everyone has to
+
+35
+03:02.470 --> 03:05.370
+stop and wait until they can go into the critical section.
+
+36
+03:05.680 --> 03:07.210
+And that is analogous to locks.
+
+37
+03:10.360 --> 03:15.940
+Another alternative is the kind of intersections that you have on motorways [freeways]. So big, complex roundabouts
+
+38
+03:15.940 --> 03:19.990
+in the air, slip roads, and that is analogous to lock free.
+
+39
+03:21.490 --> 03:27.310
+Instead of having one central person organizing everything, the traffic organizes itself or at least
+
+40
+03:27.310 --> 03:27.910
+tries to.
+
+41
+03:29.320 --> 03:33.910
+In this kind of intersection, traffic from different levels can go over the same section at the same
+
+42
+03:33.910 --> 03:39.340
+time, and the traffic from one level, that is one thread, can merge with traffic from a different level
+
+43
+03:39.760 --> 03:40.720
+without having to stop.
+
+44
+03:42.140 --> 03:45.380
+Obviously, this all has to be done very carefully, otherwise there will be a collision.
+
+45
+03:49.370 --> 03:55.520
+The drawbacks of lock-free programming are that it is very difficult. Writing lock-free code, which
+
+46
+03:55.520 --> 03:58.610
+is correct and efficient, can often defeat experts.
+
+47
+03:59.480 --> 04:05.300
+I have seen examples of code that was written by an expert and checked by another expert,
+that still had
+
+48
+04:05.300 --> 04:06.160
+a subtle bug in it.
+
+49
+04:09.290 --> 04:16.790
+Many basic data structures cannot be written as lock-free.
+For example, the basic double-linked list,
+
+50
+04:16.790 --> 04:22.760
+which is fairly straightforward, you might think.
+No one has yet found an algorithm for writing that
+
+51
+04:22.910 --> 04:26.440
+in a lock-free way. Or at least that was the case a couple of years ago.
+
+52
+04:28.160 --> 04:30.890
+Lock-free programming is conceptually very complicated.
+
+53
+04:31.170 --> 04:36.890
+We are not really going to go into that. But a lot of the assumptions that you normally make about
+
+54
+04:36.890 --> 04:38.120
+programs will break down.
+
+55
+04:39.770 --> 04:45.170
+For example, one of the basic assumptions we make is that we write some code and it is going to be executed
+
+56
+04:45.170 --> 04:46.550
+in the order that we wrote it.
+
+57
+04:47.090 --> 04:49.450
+That's not necessarily true in lock-free programming.
+
+58
+04:51.250 --> 04:55.020
+And this complexity makes it unsuitable for many applications.
+
+59
+04:57.100 --> 05:03.040
+If, for example, you are writing a GUI application where you are using threads to keep the various functional
+
+60
+05:03.400 --> 05:08.200
+features of the program separate, then there is no advantage to making that lock-free.
+
+61
+05:09.920 --> 05:14.930
+On the other hand, if you have something where performance really is critical, such as infrastructure
+
+62
+05:14.930 --> 05:21.020
+in a financial system, for example, then there may be some benefit from using lock-free programming.
+
+63
+05:23.130 --> 05:27.930
+In general, lock-free programming should only be used if there is some data structure in the program
+
+64
+05:28.380 --> 05:31.890
+which is subject to high contention. In a financial application,
+
+65
+05:31.950 --> 05:38.490
+this could be the buffer which receives all the incoming orders and using locks causes unacceptable
+
+66
+05:38.490 --> 05:39.090
+performance.
+
+67
+05:40.430 --> 05:45.410
+In that example, there would be a good case for writing a lock-free version, provided, of course, it
+
+68
+05:45.410 --> 05:47.900
+does actually offer the performance that is needed.
+
+69
+05:51.080 --> 05:55.360
+Right, one last thing before we finish this section. Let's come back to double checked looking.
+
+70
+05:55.740 --> 06:01.530
+We've seen it several different ways and now we are going to look at the classic way of solving it.
+Before
+
+71
+06:01.530 --> 06:02.100
+C++11,
+
+72
+06:02.490 --> 06:03.840
+this was the only way to do it.
+
+73
+06:04.110 --> 06:09.870
+Obviously, C++ did not support threads or atomic variables, 
+but there were libraries that allowed you to
+
+74
+06:09.870 --> 06:10.340
+do this.
+
+75
+06:12.760 --> 06:18.460
+You will remember that the double checked looking problem, is to initialize a variable and make sure
+
+76
+06:18.460 --> 06:19.930
+it only gets initialized once.
+
+77
+06:21.640 --> 06:26.120
+The classic solution is that we make the variable that we are initializing atomic.
+
+78
+06:27.100 --> 06:30.490
+So we have a pointer to some type and then we make that atomic.
+
+79
+06:32.920 --> 06:37.840
+And that will solve the problem where we had the race condition with the value of the pointer not necessarily
+
+80
+06:37.840 --> 06:40.690
+being updated when the object was initialized.
+
+81
+06:44.110 --> 06:49.600
+One slight complication is that atomic types do not have any dereferencing operators.
+
+82
+06:50.720 --> 06:55.730
+If we want to do anything with this pointer, we will will have to copy it to a normal non-atomic pointer
+
+83
+06:55.850 --> 06:59.090
+before we can use it. So we could do something like that.
+
+84
+07:00.140 --> 07:02.720
+Well, we could use a cast, but generally casts are a bad idea.
+
+85
+07:02.960 --> 07:05.290
+And in any case, the cast will do exactly the same thing.
+
+86
+07:05.300 --> 07:06.660
+So there is no gain from doing that.
+
+87
+07:09.460 --> 07:17.320
+So the code would look like this, we have the class that we want to create an instance of.
+We have
+
+88
+07:17.320 --> 07:24.790
+the instance that we have made atomic. We have the mutex that is going to do the locking.
+
+89
+07:26.290 --> 07:30.130
+And then the actual code for doing the double checked looking is exactly the same.
+
+90
+07:32.940 --> 07:39.270
+The difference is that this ptr variable is atomic, so we are guaranteed that the assignment is not
+
+91
+07:39.270 --> 07:40.010
+interruptible.
+
+92
+07:40.890 --> 07:45.900
+So there is no possibility another thread could come in and see a partially initialized or uninitialized
+
+93
+07:45.900 --> 07:46.380
+object.
+
+94
+07:47.820 --> 07:53.090
+And then we have to get a normal, non-atomic pointer to actually do anything with it.
+
+95
+07:55.330 --> 07:58.650
+And the rest of the program is just normal stuff, we just create some threads.
+
+96
+08:00.600 --> 08:05.160
+And join on them. The headers are what you would expect.
+
+97
+08:10.360 --> 08:10.780
+OK.
+
+98
+08:13.640 --> 08:20.270
+OK, so that's it for this video and this section. I'll see you next time, but meanwhile, keep coding!

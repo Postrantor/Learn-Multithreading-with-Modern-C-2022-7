@@ -1,0 +1,258 @@
+WEBVTT
+
+0
+00:00.210 --> 00:06.210
+Hello again. In this video, we are going to make some final remarks about mutexes before we finish
+
+1
+00:06.210 --> 00:08.850
+off this section and go on to the next part of the course.
+
+2
+00:11.100 --> 00:13.530
+These are mainly tips on how to use
+
+3
+00:13.530 --> 00:20.460
+mutexes effectively. The first tip is, do not look a mutex for any longer than you need to.
+
+4
+00:22.480 --> 00:30.040
+If you are using a mutex to protect a shared resource, when a thread has a lock on that mutex every other
+
+5
+00:30.040 --> 00:35.260
+thread that needs to access the resource will have to stop and wait, which means all those threads
+
+6
+00:35.260 --> 00:37.120
+are going to take longer to execute.
+
+7
+00:37.690 --> 00:40.480
+And the program as a whole is going to take longer to execute.
+
+8
+00:42.610 --> 00:48.700
+If we lock for longer than we need to, for example, in the lock guard example where we kept a lock while
+
+9
+00:48.700 --> 00:51.570
+we were sleeping, then that is going to slow down the program.
+
+10
+00:53.590 --> 00:58.730
+We should also avoid doing input/output operations while holding a lock, as these are very slow.
+
+11
+00:59.920 --> 01:05.080
+And yes, I know that we did do input/output while holding a lock, but those were just to demonstrate
+
+12
+01:05.080 --> 01:05.470
+things.
+
+13
+01:05.770 --> 01:07.570
+You would not write those in a real program.
+
+14
+01:10.570 --> 01:16.750
+The typical pattern for using a mutex with a resource is that we lock the mutex just before we access
+
+15
+01:16.750 --> 01:21.970
+the resource and unlock it immediately afterwards, before we do any processing.
+
+16
+01:23.470 --> 01:28.510
+For example, if we are reading data from a file, we lock the mutex, read the data,
+
+17
+01:28.840 --> 01:33.340
+then we unlock the mutex and then we start processing the data that we just read.
+
+18
+01:34.800 --> 01:39.960
+If we need to access the file later on, if we need to save something to it, for example, then we
+
+19
+01:39.960 --> 01:40.740
+would lock it again.
+
+20
+01:42.030 --> 01:45.570
+So by doing that, we give other threads, more opportunities to run.
+
+21
+01:47.230 --> 01:54.190
+When working with shared data, it is often useful to make our own private copy of the data and then we can
+
+22
+01:54.310 --> 01:56.770
+do the processing on that private copy without
+
+23
+01:56.890 --> 01:57.130
+a lock.
+
+24
+01:58.320 --> 02:04.350
+And again, if we needed to update the shared version of the data, then we just acquire another lock on it.
+
+25
+02:08.240 --> 02:14.870
+When we have complex data structures or compound variables, how many of the elements do we lock?
+
+26
+02:15.380 --> 02:20.000
+And the answer, which I hope should be common sense, is that we do not look any more elements than
+
+27
+02:20.000 --> 02:20.570
+we need to.
+
+28
+02:22.710 --> 02:28.980
+As an example, if you are writing a linked list implementation, it is not a good idea to have a single
+
+29
+02:28.980 --> 02:32.160
+lock which covers every access to the list.
+
+30
+02:33.300 --> 02:38.940
+For example, if you want to access the first element, then you have to put a lock on it, which excludes
+
+31
+02:38.940 --> 02:44.130
+every other thread. Even if you have a thread which wants to access a completely unrelated element,
+
+32
+02:44.460 --> 02:45.780
+that thread would be locked out.
+
+33
+02:46.890 --> 02:52.010
+So it is better to have locks which are specific to a particular element or group of elements.
+
+34
+02:53.620 --> 02:59.350
+On the other hand, if you have one lock per element, then that can be too fine-grained.
+
+35
+03:00.070 --> 03:06.550
+If you consider removing a node from a linked list, that will affect the nodes before and after
+
+36
+03:06.550 --> 03:09.130
+that node because their pointers need to be updated.
+
+37
+03:10.090 --> 03:16.330
+If you just have a lock which applies only to that node, then there is a race condition, because other threads
+
+38
+03:16.360 --> 03:19.610
+could interrupt and modify those surrounding nodes.
+
+39
+03:20.980 --> 03:27.310
+So in that case, you would need to have a lock, which also covers the surrounding nodes and it needs
+
+40
+03:27.310 --> 03:29.750
+to acquire those locks in a single operation.
+
+41
+03:30.580 --> 03:34.570
+In fact, writing a thread-safe linked list is surprisingly difficult.
+
+42
+03:36.190 --> 03:38.590
+And certainly not something we are going to cover in this course.
+
+43
+03:41.650 --> 03:44.800
+So what are the advantages and disadvantages of mutexes?
+
+44
+03:45.550 --> 03:51.430
+Well, mutexes allow us to prevent race conditions when we are using shared resources and they are
+
+45
+03:51.430 --> 03:53.950
+fairly straightforward, provided you take a little care.
+
+46
+03:56.350 --> 04:02.560
+Locking and unlocking mutexes are very slow operations because they require help from the operating
+
+47
+04:02.560 --> 04:03.000
+system.
+
+48
+04:04.610 --> 04:11.090
+Mutexes are rather a low level concept. They place a lot of reliance on the programmer to remember to
+
+49
+04:11.090 --> 04:15.800
+use a mutex. The programmer must remember to use the right mutex.
+
+50
+04:15.800 --> 04:19.700
+If we have our linked list, we have different mutexes for different groups of elements.
+
+51
+04:20.090 --> 04:21.410
+And it is quite easy to go wrong.
+
+52
+04:23.180 --> 04:27.500
+And the programmer must be able to understand how all these different mutexes work and how different
+
+53
+04:27.500 --> 04:29.080
+threads can modify the data.
+
+54
+04:30.020 --> 04:32.060
+And that takes quite a lot of mental bandwidth.
+
+55
+04:34.680 --> 04:40.470
+For that reason, most real world programs do not use mutexes directly; they use higher level structures.
+
+56
+04:44.020 --> 04:49.780
+And finally, to avoid some of the problems with using mutexes with shared data or resources, do not
+
+57
+04:49.780 --> 04:53.530
+use global data and global functions, use classes.
+
+58
+04:55.900 --> 05:01.420
+You would make the shared data or the handle to the shared resource a member of the class.
+
+59
+05:03.030 --> 05:09.120
+You would also make the mutex a member of the class.
+You make the task function, a member function.
+
+60
+05:11.250 --> 05:16.080
+And then you provide a getter function, so it is possible to retrieve the shared data even when there
+
+61
+05:16.080 --> 05:17.160
+are not any threads running.
+
+62
+05:18.990 --> 05:24.600
+OK, so that's it for this video and this section, next time we will go on to something else.
+
+63
+05:24.600 --> 05:26.910
+But in the meantime, keep coding!

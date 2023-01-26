@@ -1,0 +1,529 @@
+WEBVTT
+
+0
+00:00.330 --> 00:06.480
+Hello there! This course aims to teach you the principles of multi threading within the context of modern C++.
+
+1
+00:06.990 --> 00:08.490
+By modern C++,
+
+2
+00:08.640 --> 00:15.840
+I mean the language after the big changes that were made to it in 2011. I thought it would be a good
+
+3
+00:15.840 --> 00:21.820
+idea before we get into the multi threading to review the aspects of modern C++ we use in this course.
+
+4
+00:23.100 --> 00:27.750
+So if you haven't seen them before or if you want to revise them, I hope you find this helpful.
+
+5
+00:28.320 --> 00:31.050
+If you know it all already, then you can just skip over it.
+
+6
+00:32.280 --> 00:37.360
+Obviously, this is going to be a very brief treatment and we're just going to cover part of modern
+
+7
+00:37.380 --> 00:38.070
+C++.
+
+8
+00:38.640 --> 00:44.130
+If you want a detailed coverage, I recommend my course "Learn Advanced Modern C++".
+
+9
+00:48.900 --> 00:54.090
+The first thing we're going to look at is universal initialization. This means we can use the same
+
+10
+00:54.090 --> 01:00.900
+syntax for initializing any type of variable, for example, with a built in type, int x.
+
+11
+01:01.540 --> 01:08.040
+Then we use a pair of curly braces after the variable name and we put the initial value inside the braces.
+
+12
+01:08.610 --> 01:12.210
+So this is going to create a variable x, type int, with initial value
+
+13
+01:12.230 --> 01:18.260
+seven. For a class type such as the standard string it is exactly the same.
+
+14
+01:18.600 --> 01:23.820
+We have the type, then the variable name, then curly braces containing the initial value.
+
+15
+01:26.130 --> 01:31.350
+So this will create a string variable "s", with the initial value "let us begin" and then if we print
+
+16
+01:31.350 --> 01:35.030
+them out, we should see, yes, we do, we do get those values.
+
+17
+01:37.480 --> 01:40.210
+So this form of initialization can be used with any type.
+
+18
+01:40.450 --> 01:43.420
+It also prevents what are called narrowing conversions.
+
+19
+01:43.900 --> 01:50.950
+For example, if we have an int and we try to initialize it with a double, then in that case the double
+
+20
+01:50.950 --> 01:52.000
+is being narrowed down.
+
+21
+01:52.010 --> 01:54.190
+It's going to be truncated to seven.
+
+22
+01:55.360 --> 01:58.980
+So some compilers might give a warning for this, but they can't give an error.
+
+23
+02:00.970 --> 02:06.100
+And when we compile it, we get "conversion from double to int, possible loss of data".
+
+24
+02:06.700 --> 02:11.560
+I don't know if you can see that, it's rather small, but it is there. It is easily overlooked.
+
+25
+02:12.850 --> 02:20.320
+And you see that the value of y has been truncated to seven. if we use the new syntax.
+
+26
+02:24.410 --> 02:27.380
+Then we get an error and you can't ignore that.
+
+27
+02:31.240 --> 02:37.570
+We can also use this syntax for initializing with multiple values, for example, we can initialize
+
+28
+02:37.570 --> 02:39.070
+all the elements in a vector.
+
+29
+02:39.760 --> 02:44.730
+So this will create a vector v of int whose elements are four, two, three, five and one.
+
+30
+02:45.730 --> 02:53.290
+We can also, as an example, initialize a string using individual characters and then when we print them
+
+31
+02:53.290 --> 02:53.590
+out.
+
+32
+02:56.880 --> 03:01.200
+There we are: four, two, three, five one, and the string is "hello".
+
+33
+03:06.380 --> 03:12.690
+The next feature is the nullptr keyword. This represents the null pointer.
+
+34
+03:13.790 --> 03:18.230
+It's designed to have a type which is compatible with any pointer, but not with anything else.
+
+35
+03:20.270 --> 03:22.560
+I'll just comment that code out for a minute.
+
+36
+03:23.070 --> 03:25.540
+I've got two functions here which are overloaded.
+
+37
+03:25.850 --> 03:29.210
+One takes an inch and the other takes pointer to inch.
+
+38
+03:30.050 --> 03:36.440
+So if we call this with nullptr, we always get the version which takes a pointer. Yup.
+
+39
+03:39.570 --> 03:46.140
+With NULL, on the other hand, this is a preprocessor macro. It is defined as having the value zero,
+
+40
+03:46.410 --> 03:47.890
+but its type is not specified.
+
+41
+03:48.420 --> 03:50.970
+So you'll get different results depending on the compiler.
+
+42
+03:52.230 --> 03:54.750
+Let's see what we get with visual C++.
+
+43
+03:56.040 --> 03:58.660
+So visual C++ thinks it's an int.
+
+44
+04:00.110 --> 04:03.720
+I tried the same code out with some other compilers. clang thinks
+
+45
+04:03.720 --> 04:08.340
+it is a pointer and GCC refuses to compile it.
+
+46
+04:09.630 --> 04:10.770
+It says it is ambiguous.
+
+47
+04:11.700 --> 04:14.190
+So in that case, neither type works.
+
+48
+04:18.150 --> 04:25.890
+Another feature is the chrono library. This provides some types to represent time points and durations.
+
+49
+04:26.490 --> 04:30.120
+In this course, we're only interested in the durations, the time intervals.
+
+50
+04:31.290 --> 04:34.590
+So this defines some types in the std::chrono namespace.
+
+51
+04:35.520 --> 04:42.050
+Seconds means multiples of one second, milliseconds means thousandths of a second and microseconds means
+
+52
+04:42.060 --> 04:43.110
+millionths of a second.
+
+53
+04:44.400 --> 04:51.720
+So we can create a value, second brackets two. This will represent an interval of two seconds.
+
+54
+04:52.810 --> 04:58.510
+Milliseconds, twenty is twenty milliseconds and microseconds, 50 is 50 microseconds.
+
+55
+05:03.140 --> 05:10.100
+Modern C++ allows the user to define their own literals, and in C++ 14, the language provided some
+
+56
+05:10.100 --> 05:10.800
+useful ones.
+
+57
+05:11.990 --> 05:16.730
+There's a string literal, so you can have a string literal, which is of type string and not an array
+
+58
+05:16.730 --> 05:17.410
+of char.
+
+59
+05:18.840 --> 05:23.120
+There are literals for distances and also literals for time intervals.
+
+60
+05:25.100 --> 05:33.020
+These are defined in the literals namespace, the ones for string are in std::string colon colon literals
+
+61
+05:33.020 --> 05:34.130
+namespace and so on.
+
+62
+05:34.520 --> 05:38.430
+These are all inline name spaces, which is another modern C++ feature.
+
+63
+05:39.110 --> 05:43.400
+It means you can just use the std::literals namespace and you'll pull all these in.
+
+64
+05:46.620 --> 05:53.130
+So we have some suffixes, if we put "s" after the number two, this means an interval of two seconds.
+
+65
+05:53.430 --> 05:57.360
+So this is fully equivalent to the seconds{2} that we had in the previous slide.
+
+66
+06:00.360 --> 06:07.650
+This one here. 20ms is 20 milliseconds and 50us is 50 microseconds.
+
+67
+06:11.780 --> 06:18.300
+One of the most important features of modern C++ is the auto type specifier. When we use auto instead of
+
+68
+06:18.300 --> 06:21.830
+a type, the compiler will deduce the type and fill it in for us.
+
+69
+06:22.580 --> 06:29.690
+For example, if we have auto x curly braces six, the compiler will look at six and deduce that this
+
+70
+06:29.690 --> 06:32.310
+is an inct, therefore x will have type int.
+
+71
+06:33.200 --> 06:38.810
+So this will produce exactly the same code as if we'd written int x curly braces six.
+
+72
+06:41.450 --> 06:47.630
+Where this comes in useful is if we're working with complicated types, for example, iterators to containers.
+
+73
+06:48.140 --> 06:53.890
+If we have a vector of string and we call the begin member function the return type from that,
+
+74
+06:54.590 --> 06:59.150
+if we write it out properly, we have to do vector angle bracket string, colon colon iterator.
+
+75
+07:00.350 --> 07:05.760
+But in modern C++, we can just put auto and the compiler will fill in the correct type.
+
+76
+07:07.280 --> 07:09.020
+In fact, in modern C++,
+
+77
+07:09.050 --> 07:13.760
+there are some situations where the type cannot be known by the programmer because it is something that is
+
+78
+07:13.850 --> 07:15.600
+generated internally by the compiler.
+
+79
+07:16.250 --> 07:21.290
+If we want to create a variable of that type, the only possibility is to use auto.
+
+80
+07:25.500 --> 07:31.800
+One situation where auto comes in really useful is in loops. So we have a vector, then we have a
+
+81
+07:31.800 --> 07:35.280
+loop which goes through every element in the container and adds two to it.
+
+82
+07:36.180 --> 07:39.140
+And then we print out the elements from the vector.
+
+83
+07:39.540 --> 07:40.960
+So let's see what we get.
+
+84
+07:42.450 --> 07:45.870
+So that gives us six, four, five, seven and three.
+
+85
+07:48.700 --> 07:52.570
+Instead of typing out the full type, we can just put auto.
+
+86
+07:56.110 --> 08:02.350
+And then the compiler will look at the return type of the begin call and deduce that we want
+
+87
+08:02.890 --> 08:04.540
+an iterator to a vector of int.
+
+88
+08:06.830 --> 08:09.160
+And there we are, we get exactly the same results.
+
+89
+08:13.990 --> 08:18.040
+One important point about auto is that it only gives the bare underlying type.
+
+90
+08:20.380 --> 08:26.260
+In this example, the compiler was deducing the type from six. Six is actually a const, but the compiler
+
+91
+08:26.260 --> 08:30.820
+deduced that x should be a normal int, variable and not a const.
+
+92
+08:31.810 --> 08:35.580
+In fact, when auto is used, any const or reference is ignored.
+
+93
+08:36.280 --> 08:41.290
+If we have a function which returns a reference to const, which is perhaps not the greatest interface,
+
+94
+08:42.010 --> 08:48.650
+if we use auto to create a variable which captures this return value, then I is going to be an int, not
+
+95
+08:48.660 --> 08:49.860
+a const reference to int.
+
+96
+08:51.130 --> 08:54.580
+So this will make a copy of the return value, which will be mutable.
+
+97
+08:56.140 --> 09:03.460
+If we actually want to have a const reference, then we need to type that in explicitly and then
+
+98
+09:03.460 --> 09:09.100
+we have const reference to auto I, and that will cause i to be deduced as a reference to const.
+
+99
+09:09.760 --> 09:15.100
+There is actually a way to make the compiler do that in C++ 14, but we are not going to use that in
+
+100
+09:15.100 --> 09:15.670
+this course.
+
+101
+09:15.670 --> 09:17.460
+So I will not discuss it here.
+
+102
+09:22.090 --> 09:28.390
+Another very useful feature is the range for loop. If we want to iterate over the containers, modern
+
+103
+09:28.390 --> 09:30.850
+C++ has a special syntax for that.
+
+104
+09:32.670 --> 09:34.800
+We have this reduced for loop.
+
+105
+09:36.290 --> 09:41.600
+So this will cause the compiler to generate the boilerplate code, which calls begin(), increments the
+
+106
+09:41.600 --> 09:47.480
+iterator, and compares it to the result of calling end() and then dereferences the iterator.
+
+107
+09:48.110 --> 09:51.320
+So this it in here is actually going to have the type of the element.
+
+108
+09:52.370 --> 09:58.280
+And then this is going to be a copy of the vector element so we can just print it out directly without
+
+109
+09:58.280 --> 09:59.360
+having to dereference it.
+
+110
+10:00.980 --> 10:08.300
+If we want to modify the elements in the vector, then we need to use the reference form of auto.
+
+111
+10:09.170 --> 10:11.210
+So this would be an actual reference to the element.
+
+112
+10:11.450 --> 10:17.600
+And then if we do something with that in the loop, then that change will be made to the element in
+
+113
+10:17.600 --> 10:18.080
+the vector.
+
+114
+10:22.340 --> 10:23.900
+So let's look at this.
+
+115
+10:28.100 --> 10:32.890
+Here we need the reference because we're going to be modifying the elements. We remove the star,
+
+116
+10:32.900 --> 10:36.490
+of course, because now we've got the actual element and not an iterator to it.
+
+117
+10:40.360 --> 10:41.860
+OK, let's see if I got that right.
+
+118
+10:44.210 --> 10:44.810
+Yes, I have :)
+
+119
+10:47.600 --> 10:53.930
+OK, so this is going to go through every element in the vector, we are going to get a reference to
+
+120
+10:53.930 --> 10:56.570
+the element and then we can add two to it.
+
+121
+10:57.560 --> 11:02.960
+And then in this loop, we're going to get a copy of each element in the vector and we print it out.
+
+122
+11:05.100 --> 11:10.050
+So this is very useful in the majority of cases where you want to iterate over every element in the
+
+123
+11:10.050 --> 11:13.530
+container in order and you want to visit every element.
+
+124
+11:15.240 --> 11:18.130
+Sometimes you may want to do something different.
+
+125
+11:18.540 --> 11:24.360
+You may only want to iterate over part of the container or you may want to miss out some elements.
+
+126
+11:25.240 --> 11:28.770
+If you're adding or moving elements, then this is not suitable.
+
+127
+11:29.070 --> 11:34.140
+In all those cases, you will need to write out a traditional loop, but you will be able to use auto
+
+128
+11:34.350 --> 11:36.870
+instead of having to write out the iterator explicitly.
+
+129
+11:38.100 --> 11:39.570
+Okay, so that's it for this video.
+
+130
+11:39.840 --> 11:40.740
+I'll see you next time.
+
+131
+11:40.750 --> 11:42.870
+But meanwhile, keep coding!

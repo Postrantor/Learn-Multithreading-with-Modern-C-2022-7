@@ -1,0 +1,311 @@
+WEBVTT
+
+0
+00:00.150 --> 00:00.760
+Hello again!
+
+1
+00:00.930 --> 00:07.110
+In this video, we are going to look at the packaged task.
+In the last video we spoke about asynchronous
+
+2
+00:07.110 --> 00:13.500
+programming and that may have reminded you of futures,
+and futures are very much connected with asynchronous
+
+3
+00:13.500 --> 00:14.030
+programming.
+
+4
+00:15.120 --> 00:19.170
+So this is the first example in which we are going to use futures with asynchronous programming.
+
+5
+00:21.430 --> 00:27.190
+The packaged task class really bundles together everything you need to run a thread
+and to get a return
+
+6
+00:27.190 --> 00:31.450
+from it, so it is a higher level of abstraction than using threads directly.
+
+7
+00:33.940 --> 00:41.020
+The packaged task will associate a function with a promise object, so this is a bit like the producer
+
+8
+00:41.200 --> 00:44.140
+function in the producer-consumer model we had earlier.
+
+9
+00:44.590 --> 00:48.090
+We had a producer function which takes a promise as argument.
+
+10
+00:49.780 --> 00:52.960
+The packaged task represents an asynchronous operation.
+
+11
+00:54.010 --> 00:56.560
+A packaged task object is callable.
+
+12
+00:57.070 --> 01:03.490
+When we invoke it, the associated function is run and the return value from the function is stored
+
+13
+01:03.490 --> 01:04.180
+in the promise.
+
+14
+01:04.960 --> 01:09.970
+So this is rather like the producer function, which is run in a thread and the return value is stored
+
+15
+01:09.970 --> 01:10.630
+in the promise.
+
+16
+01:12.610 --> 01:18.010
+We can also obtain the future which is associated with the promise inside the packaged task,
+and
+
+17
+01:18.010 --> 01:22.390
+then we can call get() on that future
+and that will return the value from the function.
+
+18
+01:26.610 --> 01:29.070
+The packaged_task class is templated.
+
+19
+01:29.160 --> 01:36.480
+It is in the <future> header.
+The parameter for the packaged test is - well, more or less - the signature
+
+20
+01:36.480 --> 01:37.290
+of the function.
+
+21
+01:37.960 --> 01:44.880
+If we have a function which takes a string by const reference and double and returns an int,
+the template
+
+22
+01:44.880 --> 01:51.000
+parameter would be int, open bracket then const reference to string, comma double, close bracket.
+
+23
+01:53.220 --> 01:58.890
+The promise associated with that packaged task also has a parameter
+and that will be the return type
+
+24
+01:58.890 --> 01:59.650
+of the function.
+
+25
+02:00.390 --> 02:02.670
+So that will be set up by the packaged task.
+
+26
+02:04.120 --> 02:08.500
+When we create an instance of packaged_task, we pass it a callable object.
+
+27
+02:10.060 --> 02:13.600
+And that will be the equivalent of the producer function with the promise.
+
+28
+02:17.180 --> 02:25.730
+When we create a packaged task, nothing will actually happen.
+By default, the thread will not be run until
+
+29
+02:25.850 --> 02:27.640
+the packaged task is started.
+
+30
+02:30.270 --> 02:36.360
+It is possible to start a packaged task directly,
+but normally we would create a thread instance which has
+
+31
+02:36.360 --> 02:42.600
+the packaged task as its argument.
+The packaged task will be passed by move and that will cause the
+
+32
+02:42.960 --> 02:45.420
+packaged task function to run in its own thread.
+
+33
+02:47.670 --> 02:53.700
+The packaged task has ownership of the callable object and the promise,
+so it can be moved but not copied.
+
+34
+02:54.990 --> 02:56.780
+So let's have a look at some code.
+
+35
+02:57.930 --> 03:08.520
+So we are creating a packaged task. The associated function will take two ints and return another int.
+
+36
+03:10.860 --> 03:18.090
+The instance is called ptask. We give it the function as argument.
+We are using a lambda expression
+
+37
+03:18.630 --> 03:21.480
+which will add two arguments and return their sum.
+
+38
+03:24.400 --> 03:29.890
+We call get_future() on the packaged task to get the future, 
+which will be associated with the
+
+39
+03:29.890 --> 03:31.180
+promise inside the task.
+
+40
+03:33.670 --> 03:41.590
+And then we create a thread.
+We move the packaged_task instance into it, and then we give the arguments
+
+41
+03:41.980 --> 03:44.170
+to the function as the arguments to the threat.
+
+42
+03:44.860 --> 03:50.800
+So this is going to create a new thread which will call this lambda function,
+and it will pass it the
+
+43
+03:50.800 --> 03:52.240
+arguments, six and seven.
+
+44
+03:52.990 --> 03:59.950
+And then this will return the sum in the promise,
+and then we can call get on the future associated with
+
+45
+03:59.950 --> 04:00.520
+that promise.
+
+46
+04:00.880 --> 04:02.190
+And that will give us the answer.
+
+47
+04:05.600 --> 04:15.890
+So let's try this out... six plus seven is 13.
+So the result is obtained by calling get() on this future.
+
+48
+04:16.400 --> 04:18.800
+This future is associated with a promise.
+
+49
+04:19.370 --> 04:23.500
+The promise is associated with the packaged task that runs this function.
+
+50
+04:24.020 --> 04:28.070
+And then we start up a thread which runs that function with the arguments six and seven.
+
+51
+04:29.450 --> 04:31.920
+Then we call the get on the future and the future will wait.
+
+52
+04:32.600 --> 04:34.690
+In this case, the function will return instantly.
+
+53
+04:35.240 --> 04:37.370
+So we get the results instantly.
+
+54
+04:41.040 --> 04:46.410
+The advantages of using a packaged task are that we do not have to write lots of boilerplate with promises
+
+55
+04:46.410 --> 04:47.520
+and so on.
+
+56
+04:49.590 --> 04:56.130
+Another useful property is that we can create a container with packaged task objects which will store all
+
+57
+04:56.130 --> 05:00.690
+these threads which are waiting to start,
+and then when we are ready, we can go through the container
+
+58
+05:00.690 --> 05:02.250
+and start the threads up.
+
+59
+05:03.710 --> 05:08.810
+If we tried to do that with thread objects, the threads would start running as soon as the object is created,
+
+60
+05:09.170 --> 05:14.450
+so we would have a container full of threads that are already running, which might not necessarily be what
+
+61
+05:14.450 --> 05:15.010
+we wanted.
+
+62
+05:17.100 --> 05:23.280
+The packaged task is useful for managing threads.
+We can arrange things so that each task can be run
+
+63
+05:23.280 --> 05:24.390
+on a particular thread.
+
+64
+05:26.250 --> 05:31.650
+We can write a thread scheduler, which will run threads in a certain order,
+and we can create a thread
+
+65
+05:31.650 --> 05:35.280
+pool which consists of threads which are waiting for work to arrive.
+
+66
+05:36.120 --> 05:38.580
+And we are going to be looking at thread pools later on in the course.
+
+67
+05:40.130 --> 05:45.380
+However, if you just want to run a task on a new thread and get its results,
+there is an easier alternative
+
+68
+05:45.380 --> 05:47.120
+which we will look at in the next video.
+
+69
+05:48.960 --> 05:50.850
+OK, so that's it for this video.
+
+70
+05:51.300 --> 05:52.190
+I'll see you next time.
+
+71
+05:52.210 --> 05:54.180
+But meanwhile, keep coding!

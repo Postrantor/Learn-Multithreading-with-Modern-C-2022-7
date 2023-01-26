@@ -1,0 +1,356 @@
+WEBVTT
+
+0
+00:00.120 --> 00:00.690
+Hello again!
+
+1
+00:00.870 --> 00:04.200
+In this video, we are going to implement a simple thread pool.
+
+2
+00:05.850 --> 00:08.880
+Let's start off by thinking about how we are going to implement this.
+
+3
+00:09.340 --> 00:15.330
+We are going to write a class for the thread pool. For a thread pool, we need a fixed size container
+
+4
+00:15.330 --> 00:20.340
+of thread objects and a queue of some sort for storing the incoming tasks.
+
+5
+00:21.600 --> 00:24.270
+We are going to use a vector of thread objects.
+
+6
+00:24.630 --> 00:28.900
+We are going to call the hardware currency function to find out how big to make this vector.
+
+7
+00:30.600 --> 00:36.330
+We are going to use the concurrent queue that we wrote in an earlier part of the course for storing tasks.
+
+8
+00:36.780 --> 00:39.150
+So those are going to be members of this class.
+
+9
+00:40.930 --> 00:47.380
+We will have a public member function of this class which callers can use to get their task functions
+
+10
+00:47.380 --> 00:48.310
+pushed onto the queue.
+
+11
+00:48.850 --> 00:50.440
+This is going to be called submit.
+
+12
+00:53.090 --> 00:58.700
+Each of these threads in the container will have a thread function, which performs an infinite loop.
+This
+
+13
+00:58.700 --> 01:00.970
+infinite loop will call pop on the queue.
+
+14
+01:02.810 --> 01:06.660
+We are going to use the version of the concurrent queue, which has a condition variable.
+
+15
+01:07.250 --> 01:12.440
+So if the queue is empty, the thread will stop and wait until some work becomes available.
+
+16
+01:13.460 --> 01:21.730
+The queue is concurrent, so only one thread at a time will be able to pop the queue.
+If the pop call completes,
+
+17
+01:21.740 --> 01:25.790
+we know that this thread has got a task and it is the only one which has that task.
+
+18
+01:26.750 --> 01:31.170
+That task will be a callable object, so the thread will simply call it.
+
+19
+01:32.550 --> 01:38.750
+Okay, so I would like you to pause the video for a short while and try and write a definition for this
+
+20
+01:38.750 --> 01:39.110
+class.
+
+21
+01:43.880 --> 01:46.770
+We are going to use this type alias to make things simpler.
+
+22
+01:47.720 --> 01:54.140
+The objects in the queue are going to be function objects. The standard function class from the library,
+
+23
+01:54.140 --> 01:55.970
+which can represent any callable type.
+
+24
+01:57.140 --> 02:03.500
+This is going to store a pointer or lambda expression or whatever, which takes no arguments and returns
+
+25
+02:03.500 --> 02:03.950
+nothing.
+
+26
+02:05.130 --> 02:10.870
+We are going to have a concurrent queue of these function objects. That will be the work queue.
+
+27
+02:13.450 --> 02:20.440
+The worker threads will be on a vector of threads.
+We are going to have a worker member function,
+
+28
+02:20.440 --> 02:26.120
+which will be the actual thread function for the threads.
+Then on the public interface, we have our submit
+
+29
+02:26.120 --> 02:30.490
+function which takes an argument of this function object type.
+
+30
+02:31.970 --> 02:37.280
+We also have a constructor and destructor for populating and clearing the vector of threads.
+
+31
+02:38.990 --> 02:44.150
+OK, so you might want to pause the video again and spend a couple of minutes thinking about how you would
+
+32
+02:44.200 --> 02:45.740
+implement these member functions.
+
+33
+02:51.470 --> 02:55.950
+The worker function. This is going to be the thread function for the pool of threads.
+
+34
+02:57.110 --> 02:58.790
+This has an infinite loop.
+
+35
+03:01.570 --> 03:09.010
+In the infinite loop, it calls pop on the work queue. When this call completes, there will be a callable
+
+36
+03:09.010 --> 03:13.650
+object in the task argument and then we just call it.
+
+37
+03:14.890 --> 03:19.840
+And then when that's complete, we go back to the loop and call pop again and wait for the next task
+
+38
+03:19.840 --> 03:20.650
+to become available.
+
+39
+03:21.970 --> 03:24.040
+The submit function is even simpler.
+
+40
+03:24.400 --> 03:26.290
+We just push the argument onto the work queue.
+
+41
+03:32.580 --> 03:38.370
+The thread pool constructor needs to populate the vector, so we call hardware concurrency to find out
+
+42
+03:38.370 --> 03:42.030
+how many cores and then we create that number of threads.
+
+43
+03:42.510 --> 03:44.190
+We just push them back onto the vector.
+
+44
+03:45.600 --> 03:49.310
+The thread function is going to be the worker member function.
+
+45
+03:49.500 --> 03:56.040
+So we use the syntax for a member function pointer, which is ampersand, followed by the fully qualified
+
+46
+03:56.040 --> 03:56.340
+name.
+
+47
+03:58.150 --> 04:03.460
+We also pass the "this" argument to the thread function, because every member function that is not
+
+48
+04:03.460 --> 04:06.700
+static, must have the "this" pointer as its first argument.
+
+49
+04:10.780 --> 04:17.680
+And then in the destructor, we iterate over this vector and we join on all the thread objects.
+Notice
+
+50
+04:17.680 --> 04:23.980
+that we use the reference form of the range for loop, because threads are movable, but cannot be copied.
+
+51
+04:27.240 --> 04:30.480
+The concurrent queue is exactly the same as the one that we had before.
+
+52
+04:31.500 --> 04:33.300
+There should not be anything surprising in there,
+
+53
+04:33.360 --> 04:33.720
+I hope!
+
+54
+04:38.050 --> 04:45.280
+To use this class, you create an instance of it. So that constructor will populate the vector
+
+55
+04:45.280 --> 04:46.440
+with the thread objects.
+
+56
+04:48.860 --> 04:51.380
+Then you write a suitable task function.
+
+57
+04:51.620 --> 04:53.540
+This one just prints out the thread ID.
+
+58
+04:54.170 --> 04:58.210
+There is also a mutex with a lock to make the output look tidy.
+
+59
+04:59.750 --> 05:04.580
+Then you call submit function and you pass this task function as its argument.
+
+60
+05:07.080 --> 05:11.460
+I have put a sleep function in here, because if you do not put that,
+the main function can terminate before
+
+61
+05:11.460 --> 05:12.600
+the threads start up.
+
+62
+05:13.140 --> 05:14.970
+So this is just to make sure it works properly.
+
+63
+05:17.100 --> 05:19.040
+OK, so let's see what happens.
+
+64
+05:21.120 --> 05:26.160
+I put in a call to hardware concurrency just so we can see how many cores there are.
+This machine has
+
+65
+05:26.310 --> 05:26.910
+eight cores.
+
+66
+05:28.540 --> 05:34.630
+You can see that thread 6196 was the first one to execute a task function
+and it finished
+
+67
+05:34.630 --> 05:40.450
+that. Then it popped another one and executed that, then it pops another task and executed that.
+
+68
+05:41.050 --> 05:43.270
+Then presumably it was busy by that point.
+
+69
+05:43.690 --> 05:46.680
+So some of the other threads have started sharing some of the load.
+
+70
+05:52.630 --> 05:58.600
+If you were writing a real program, you would probably have an infinite loop in the main as well,
+and
+
+71
+05:58.600 --> 06:05.230
+that could, for example, be receiving orders. Then you create a task function to process the order
+
+72
+06:05.230 --> 06:06.660
+and then you send that to the thread
+
+73
+06:06.680 --> 06:07.030
+pool.
+
+74
+06:08.430 --> 06:12.690
+And then one of the threads will pop that task off the queue and execute it.
+
+75
+06:17.520 --> 06:23.130
+This implementation is a bit limited because we are restricted to task functions that do not take any
+
+76
+06:23.130 --> 06:29.520
+arguments or return anything.
+It might be possible to extend this by using a packaged task rather than a
+
+77
+06:29.520 --> 06:30.360
+function object.
+
+78
+06:30.960 --> 06:37.230
+And then, in the main function, you would obtain a future from the packaged task and call get on it,
+to
+
+79
+06:37.230 --> 06:38.570
+get the result of the processing.
+
+80
+06:39.360 --> 06:41.550
+So that is one possible extension of this.
+
+81
+06:42.000 --> 06:45.720
+But anyway, this will give you enough to start experimenting with thread pools.
+
+82
+06:47.010 --> 06:47.790
+So have fun!
+
+83
+06:49.380 --> 06:50.850
+That's it for this, for this video.
+
+84
+06:50.910 --> 06:51.940
+I'll see you next time.
+
+85
+06:51.960 --> 06:54.150
+But meanwhile, keep coding!

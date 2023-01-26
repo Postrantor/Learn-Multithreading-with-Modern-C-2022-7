@@ -1,0 +1,473 @@
+1
+00:00:00,150 --> 00:00:08,490
+Hello again! In this video, we are going to talk about lazy initialization. The usual advice is to initialize
+
+2
+00:00:08,490 --> 00:00:13,820
+variables at the point where they are declared. This is known as "eager" initialization.
+
+3
+00:00:14,370 --> 00:00:19,230
+It is a good practice because for built-in types, it ensures they have a defined value.
+
+4
+00:00:19,560 --> 00:00:23,540
+And for class types, it ensures that they are properly set up and ready for use.
+
+5
+00:00:24,240 --> 00:00:30,210
+So there is no danger that we might accidentally use a variable that is not a well defined state.
+
+6
+00:00:32,300 --> 00:00:38,030
+However, there is an alternative, "lazy" initialization.
+This means that a variable is not initialized
+
+7
+00:00:38,030 --> 00:00:39,990
+until the first time it is used.
+
+8
+00:00:40,970 --> 00:00:47,840
+This is mainly used when there is quite a bit of overhead involved in creating or initializing the variable.
+
+9
+00:00:49,040 --> 00:00:53,600
+For example, if we need to get data from a database or set up a network connection.
+
+10
+00:00:55,350 --> 00:01:01,710
+If they are paths through the program in which the variable is not used or if it is not actually convenient
+
+11
+00:01:01,710 --> 00:01:07,920
+to have that overhead at the point where it is declared, then you can declare it uninitialized and
+
+12
+00:01:07,920 --> 00:01:08,990
+initialize it later.
+
+13
+00:01:11,570 --> 00:01:14,160
+This is the traditional way to do it in C++.
+
+14
+00:01:14,960 --> 00:01:18,630
+We have a class of some type, it does not really matter what it does.
+
+15
+00:01:19,760 --> 00:01:25,410
+We have a global variable, which is a pointer to some instance of this class.
+
+16
+00:01:26,870 --> 00:01:31,100
+We give it the initial value null, to indicate that it has not been initialized.
+
+17
+00:01:33,070 --> 00:01:38,530
+And then before we use it, we check whether it has been initialized. If it is the first time and it is
+
+18
+00:01:38,530 --> 00:01:45,580
+not initialized then we initialize it. And then, once we know that it is safe to use it, we can do something
+
+19
+00:01:45,580 --> 00:01:45,960
+with it.
+
+20
+00:01:47,660 --> 00:01:53,150
+And this works fine in single threaded programs, but is it safe in multithreaded programs?
+
+21
+00:01:55,880 --> 00:01:59,180
+Well, I hope you considered the possibility of a data race.
+
+22
+00:02:01,550 --> 00:02:07,730
+So we have multiple threads which will access this, because they all need to check this value, and we
+
+23
+00:02:07,730 --> 00:02:12,850
+have threads which may modify them because one thread will need to write to the variable.
+
+24
+00:02:13,910 --> 00:02:16,450
+So we do have the potential for a data race.
+
+25
+00:02:17,780 --> 00:02:20,330
+So let's fix that by putting a mutex in.
+
+26
+00:02:23,230 --> 00:02:30,820
+So there we are, we have a mutex instance here and then we lock the mutex before we do the check.
+
+27
+00:02:33,330 --> 00:02:38,790
+And then once we get past the critical region in which we have potential conflict, then we unlock the
+
+28
+00:02:38,790 --> 00:02:41,950
+mutex. And that will work perfectly well.
+
+29
+00:02:42,420 --> 00:02:45,070
+But again, this might remind you of something.
+
+30
+00:02:45,630 --> 00:02:49,740
+This is the situation where we had multiple readers and few writers.
+
+31
+00:02:50,940 --> 00:02:56,010
+In this case, we only have one writer, which is the first thread that calls this.
+
+32
+00:02:57,090 --> 00:03:00,920
+So we need to lock the threads to prevent that thread from being interrupted.
+
+33
+00:03:01,140 --> 00:03:06,090
+But once the value has been initialized and we are just reading it, we do not need to lock it again.
+
+34
+00:03:06,840 --> 00:03:12,510
+So all these mutex lock() and unlock() calls are actually a waste of time once we get past that first
+
+35
+00:03:12,510 --> 00:03:13,410
+initialization.
+
+36
+00:03:16,380 --> 00:03:22,440
+The problem here is that we are going to all this trouble with lazy initialization to avoid unnecessary
+
+37
+00:03:22,440 --> 00:03:25,730
+overhead when we initialize this variable at some time.
+
+38
+00:03:26,280 --> 00:03:29,220
+But then we add lots more unnecessary overhead with all this locking.
+
+39
+00:03:32,010 --> 00:03:36,760
+The next attempt is that we only look the mutex if we need to.
+
+40
+00:03:37,140 --> 00:03:43,410
+So first we check the pointer, then we lock the mutex if we need to and initialize it.
+
+41
+00:03:43,680 --> 00:03:46,740
+Otherwise, we jump straight to the use of the variable.
+
+42
+00:03:48,530 --> 00:03:53,810
+So that means we only lock the mutex the first time when the value is being written to.
+
+43
+00:03:54,650 --> 00:03:56,240
+So is this thread-safe?
+
+44
+00:03:58,880 --> 00:04:00,390
+Well, no, still not quite.
+
+45
+00:04:00,410 --> 00:04:08,810
+We still have a data race. It is possible that the first thread can check ptr and then get interrupted,
+
+46
+00:04:10,670 --> 00:04:13,160
+and then another thread runs. It checks the pointer.
+
+47
+00:04:13,490 --> 00:04:16,490
+It gets the lock, initializes and releases the lock.
+
+48
+00:04:18,590 --> 00:04:23,170
+Then the first thread runs again, gets the lock and initializes the pointer again.
+
+49
+00:04:23,420 --> 00:04:27,800
+So we have initialized it twice, which is not what we intended to do.
+
+50
+00:04:30,430 --> 00:04:34,860
+So what we can do then is to check the pointer a second time.
+
+51
+00:04:37,800 --> 00:04:42,640
+This check is inside the lock, so we are the only thread that can be doing this check.
+
+52
+00:04:44,760 --> 00:04:49,860
+So if some other thread has come along and initialized the pointer in between these two statements,
+
+53
+00:04:50,310 --> 00:04:57,420
+then when we check it here, the test will fail and we do not create a second variable.
+
+54
+00:04:58,890 --> 00:05:00,780
+OK, so is this thread-safe?
+
+55
+00:05:03,800 --> 00:05:07,000
+And the answer, believe it or not, is that it is not thread-safe.
+
+56
+00:05:07,580 --> 00:05:14,510
+You may recall that when we were talking about the Singleton, I said there are actually two race conditions
+
+57
+00:05:14,810 --> 00:05:16,010
+and this is where it comes in.
+
+58
+00:05:18,990 --> 00:05:26,640
+The problem is that this is actually three separate operations, so let's try and find out what is going
+
+59
+00:05:26,640 --> 00:05:27,080
+on here.
+
+60
+00:05:29,110 --> 00:05:34,870
+When we call the new operator to create a variable on the heap, there are actually three separate things
+
+61
+00:05:34,870 --> 00:05:35,380
+that happen.
+
+62
+00:05:36,040 --> 00:05:43,540
+The first one is that we allocate the money on the heap and the program will make sure there is enough
+
+63
+00:05:43,540 --> 00:05:45,890
+memory for the object to be stored there.
+
+64
+00:05:47,140 --> 00:05:52,020
+Then we need to create an object in that memory, which is calling the constructor.
+
+65
+00:05:53,050 --> 00:05:57,030
+And then finally, we need to save the address of this memory that has been allocated.
+
+66
+00:05:58,510 --> 00:06:04,450
+So you may expect that they are done in that order, that the allocation is done first, then the constructor call
+
+67
+00:06:04,750 --> 00:06:06,190
+and then the store of the address.
+
+68
+00:06:07,480 --> 00:06:13,510
+Unfortunately, however, C++ allows lots of scope for reordering operations and this is one of the
+
+69
+00:06:13,510 --> 00:06:15,030
+situations where it allows it.
+
+70
+00:06:15,940 --> 00:06:21,040
+So it is quite possible that the program could allocate the memory and then save the address of that
+
+71
+00:06:21,040 --> 00:06:25,090
+memory and then go back and construct the object in this memory.
+
+72
+00:06:28,330 --> 00:06:35,090
+It is possible that the thread could be interrupted between these two operations, so the value of ptr
+
+73
+00:06:35,110 --> 00:06:40,960
+has been set, it is no longer null. Any other thread that checks that will think that the initialization
+
+74
+00:06:40,960 --> 00:06:41,530
+has been done.
+
+75
+00:06:42,580 --> 00:06:45,100
+However, the constructor call has not yet been done.
+
+76
+00:06:46,340 --> 00:06:51,640
+And then when the second thread goes ahead and accesses that memory, it will access an object that has
+
+77
+00:06:51,640 --> 00:06:54,910
+not been constructed and that will be very bad.
+
+78
+00:06:58,350 --> 00:07:04,170
+So we have a threat A, which is going through these steps. It is allocated the memory and it gets suspended.
+
+79
+00:07:06,810 --> 00:07:14,400
+So ptr has been set, but the memory does not contain any actual data. Then a thread B calls this function.
+
+80
+00:07:14,910 --> 00:07:19,020
+It tests the ptr to see whether it needs to acquire a lock.
+
+81
+00:07:20,190 --> 00:07:22,250
+Then it will see that ptr is not null
+
+82
+00:07:22,260 --> 00:07:26,730
+it will not try to get a look, it will jump straight to the call.
+
+83
+00:07:28,650 --> 00:07:34,100
+And then it is going to call a member function of an unconstructed object, and that is undefined behaviour.
+
+84
+00:07:37,950 --> 00:07:43,470
+So the problem is that thread A could come through here and it gets as far as this and then gets
+
+85
+00:07:43,470 --> 00:07:47,640
+suspended, when it has set ptr, but it has not created the object.
+
+86
+00:07:49,080 --> 00:07:57,120
+Then a second thread runs, it checks ptr, ptr is not null, so it jumps straight to this function call
+
+87
+00:07:57,540 --> 00:08:02,070
+even though ptr does not contain a properly constructed object.
+
+88
+00:08:04,870 --> 00:08:11,980
+By the way, this is known as double-checked locking. This is a very popular algorithm, but it does not work,
+
+89
+00:08:11,980 --> 00:08:14,100
+at least not the way that it has been written here.
+
+90
+00:08:16,700 --> 00:08:18,590
+There are various ways to address this.
+
+91
+00:08:18,890 --> 00:08:24,020
+One is to use a function called call_once, which does what the name suggests.
+
+92
+00:08:24,530 --> 00:08:27,110
+It ensures that a function is only called once.
+
+93
+00:08:28,010 --> 00:08:33,770
+It also guarantees that it is done in one thread and the thread that is doing the call cannot be interrupted
+
+94
+00:08:33,770 --> 00:08:35,480
+until the function call has completed.
+
+95
+00:08:36,890 --> 00:08:44,030
+To use that, we need to create a global instance of a once_flag variable, and then we pass that instance
+
+96
+00:08:44,300 --> 00:08:48,380
+and the function that wants to be called, to call_once.
+
+97
+00:08:50,210 --> 00:08:51,110
+So it will look like this.
+
+98
+00:08:51,110 --> 00:08:58,210
+We have our once_flag. This flag is used by the program to store synchronization data.
+
+99
+00:08:58,640 --> 00:09:00,830
+So there is quite a lot going on behind the scenes.
+
+100
+00:09:03,040 --> 00:09:10,120
+And then we call the function call_once, we pass this once_flag as the first argument and then, as
+
+101
+00:09:10,120 --> 00:09:13,410
+the second argument, we pass the function that we want to have called.
+
+102
+00:09:13,720 --> 00:09:19,750
+In this case, we just want to execute the call to new(), which sets the value of the ptr.
+
+103
+00:09:22,650 --> 00:09:28,950
+So this double-checked looking with call_once, is thread-safe, but it has less overhead than using a mutex.
+
+104
+00:09:30,510 --> 00:09:35,220
+There is actually another way of doing this, if you think back to the Singleton, then we solved that
+
+105
+00:09:35,220 --> 00:09:37,590
+by using a static variable.
+
+106
+00:09:38,520 --> 00:09:45,630
+And finally, just to confuse things even more, C++17 specified the order in which the operations
+
+107
+00:09:45,630 --> 00:09:47,400
+are performed in a [call to] new().
+
+108
+00:09:48,960 --> 00:09:54,300
+So the allocation is always done first, then the construction of the object and then storing the address
+
+109
+00:09:54,300 --> 00:09:55,010
+of the memory.
+
+110
+00:09:55,380 --> 00:10:00,580
+So there's no longer a race condition in the classic implementation of double-checked looking.
+
+111
+00:10:01,770 --> 00:10:09,060
+So we now have four ways to do lazy initialization in a thread-safe way. We can use the mutex as we did
+
+112
+00:10:09,060 --> 00:10:09,600
+at the beginning,
+
+113
+00:10:09,610 --> 00:10:14,010
+if we are not worried about the overhead. We can use this call_once
+
+114
+00:10:14,010 --> 00:10:18,390
+function to make sure the initialization code only gets called once.
+
+115
+00:10:19,410 --> 00:10:27,510
+We can use the classic double-checked locking algorithm with a compiler that supports C++17, and finally
+
+116
+00:10:27,510 --> 00:10:31,850
+we can make this a static local variable provided we do not need it anywhere else.
+
+117
+00:10:34,390 --> 00:10:36,310
+OK, so that's it for this video.
+
+118
+00:10:36,760 --> 00:10:39,940
+I'll see you later, but meanwhile, keep coding!
+

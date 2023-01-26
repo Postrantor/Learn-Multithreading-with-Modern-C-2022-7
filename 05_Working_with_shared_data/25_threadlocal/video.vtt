@@ -1,0 +1,247 @@
+WEBVTT
+
+0
+00:00.210 --> 00:08.670
+Hello there! In this video, we're going to talk about thread-local variables.
+C++ supports variables which
+
+1
+00:08.670 --> 00:09.730
+are thread-local.
+
+2
+00:10.140 --> 00:16.500
+We use the thread underscore local keyword to declare a variable as being local to a thread.
+
+3
+00:17.640 --> 00:23.460
+So these are quite similar to static variables. The difference is, with a static variable, you get a
+
+4
+00:23.460 --> 00:29.070
+single instance which is shared by all the threads.
+With a thread_local variable,
+
+5
+00:29.250 --> 00:30.990
+Each thread has its own instance.
+
+6
+00:35.260 --> 00:42.490
+We can declare thread-local variables anywhere that we can declare a static variable. We can declare them
+
+7
+00:42.490 --> 00:49.480
+at namespace scope, we can make them static data members of a class and we can make them local
+
+8
+00:49.480 --> 00:50.890
+variables in a function.
+
+9
+00:54.870 --> 01:01.260
+When they are at static and name space scope, they will be constructed at or before the first time they are
+
+10
+01:01.270 --> 01:02.850
+used in a translation unit.
+
+11
+01:03.810 --> 01:10.140
+And just to remind you, a translation unit is a source code file in which all the header files have
+
+12
+01:10.140 --> 01:11.970
+been included and preprocessed.
+
+13
+01:13.360 --> 01:18.700
+So that means they avoid the problems that can arise in Windows when you are sharing variables across
+
+14
+01:19.060 --> 01:21.690
+different translation units in a dynamic library.
+
+15
+01:23.550 --> 01:29.460
+Local variables, which are thread-local, are initialized in the same way as static local variables. There
+
+16
+01:29.460 --> 01:34.410
+will not be a data race, of course, because only one thread can access a thread-local variable.
+
+17
+01:36.550 --> 01:40.270
+Thread-local variables are destroyed when the thread function returns.
+
+18
+01:42.210 --> 01:48.390
+There is no guarantee about the order in which local variables are constructed, but they are destroyed
+
+19
+01:48.390 --> 01:50.940
+in the reverse order in which they were constructed.
+
+20
+01:55.110 --> 02:03.120
+One application of local variables: if we are using the C++11 features for random numbers, we can
+
+21
+02:03.120 --> 02:07.260
+arrange things so that each thread has its own access of a random number engine.
+
+22
+02:07.680 --> 02:12.640
+And if we do not seed the engine, or we use the same seed for all the engines, then that means that each
+
+23
+02:12.660 --> 02:15.210
+thread will generate the same sequence of random numbers.
+
+24
+02:15.570 --> 02:23.010
+And that's useful if you are testing. If you are not familiar with the C++11 random numbers, it is quite
+
+25
+02:23.010 --> 02:30.900
+different from the old rand() function from C. So we create an instance of the random number engine.
+
+26
+02:31.260 --> 02:36.570
+This has an overloaded function call operator, and every time you call that operator, you get
+
+27
+02:36.580 --> 02:38.340
+the next random number in the sequence.
+
+28
+02:39.570 --> 02:44.330
+Normally you use random numbers with a distribution which will scale the numbers.
+
+29
+02:44.910 --> 02:51.210
+In this case, we have a uniform distribution of real numbers which are doubles in the range from zero
+
+30
+02:51.210 --> 02:51.640
+to one.
+
+31
+02:52.140 --> 02:58.680
+So this avoids having to work out how to divide by RAND_MAX and add numbers and then worry about
+
+32
+02:58.680 --> 03:01.290
+whether you have introduced bias into the distribution.
+
+33
+03:02.190 --> 03:05.190
+This will always return uniformly distributed random numbers.
+
+34
+03:07.210 --> 03:09.820
+So in this case, we are creating the random number engine.
+
+35
+03:12.380 --> 03:18.410
+And then the distribution will also have a function call operator. Then every time we call that, we
+
+36
+03:18.410 --> 03:23.870
+give the number [engine] instance as the argument, and then that will get the next random number from the sequence
+
+37
+03:24.050 --> 03:26.390
+and it will scale it to fit into the distribution.
+
+38
+03:28.060 --> 03:34.480
+So we call it like that. We are going to call it 10 times, so it is going to generate ten random numbers
+
+39
+03:34.480 --> 03:35.740
+between zero and one.
+
+40
+03:37.180 --> 03:40.330
+I have got some code here which demonstrates this.
+
+41
+03:40.540 --> 03:43.300
+So this is the thread function from the slide.
+
+42
+03:45.010 --> 03:46.690
+I have got some headers.
+
+43
+03:48.430 --> 03:55.780
+I have also written a main function, which is going to create a thread and that will print out 10 random
+
+44
+03:55.780 --> 03:56.230
+numbers.
+
+45
+03:56.500 --> 03:59.810
+Then it creates another thread and prints out 10 numbers.
+
+46
+04:01.330 --> 04:03.070
+So let's see how that works.
+
+47
+04:06.190 --> 04:09.400
+So you can see that both threads are printing out the same random numbers.
+
+48
+04:09.880 --> 04:15.940
+The reason for this is this each thread has its own instance of the engine, which is not seeded.
+
+49
+04:16.480 --> 04:21.550
+So each thread is going to print out the first 10 numbers from the random engine's sequence.
+
+50
+04:22.300 --> 04:25.300
+Now, let's see what happens if we remove that.
+
+51
+04:26.350 --> 04:28.650
+So this is now just an ordinary global variable.
+
+52
+04:28.960 --> 04:30.460
+It is shared by all the threads.
+
+53
+04:31.420 --> 04:36.040
+So each time a thread calls it, it is going to get the next number from the sequence.
+
+54
+04:39.200 --> 04:44.530
+This time, the threads have different random numbers, so the first thread gets the first 10 random numbers,
+
+55
+04:45.170 --> 04:48.770
+then thread 2 is using the same random number engine.
+
+56
+04:49.460 --> 04:52.160
+So it gets the next 10 numbers from the sequence.
+
+57
+04:53.590 --> 05:00.460
+Before,  thread 2 was using its own instance of the random number engine, and that gave it the first 10 numbers of
+
+58
+05:00.460 --> 05:01.060
+the sequence.
+
+59
+05:02.290 --> 05:04.360
+OK, so that is it for this video.
+
+60
+05:04.750 --> 05:07.660
+I will see you next time, but meanwhile, keep coding!

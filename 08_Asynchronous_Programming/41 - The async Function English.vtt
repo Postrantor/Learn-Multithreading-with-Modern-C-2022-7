@@ -1,0 +1,494 @@
+WEBVTT
+
+0
+00:00.150 --> 00:00.730
+Hello again!
+
+1
+00:00.930 --> 00:07.440
+In this video, we are going to talk about the async function.
+The async function is another way to
+
+2
+00:07.440 --> 00:08.430
+start a thread.
+
+3
+00:09.000 --> 00:12.210
+It is defined in the <future> standard library header.
+
+4
+00:13.690 --> 00:16.270
+And we can start a thread by calling async().
+
+5
+00:17.670 --> 00:23.130
+This async function call represents a higher level abstraction than the standard thread classs.
+
+6
+00:24.810 --> 00:30.480
+We can start a task with async() and run it in the background,
+and that will allow us to do other work while
+
+7
+00:30.480 --> 00:31.500
+the task is running.
+
+8
+00:32.010 --> 00:37.720
+So, as the name suggests, it can be used for starting asynchronous tasks.
+
+9
+00:39.800 --> 00:44.470
+The syntax for calling async() is very similar to the constructor of the standard
+
+10
+00:44.480 --> 00:50.540
+thread.
+We give the task function as the first argument and then we follow it with the arguments to
+
+11
+00:50.540 --> 00:51.530
+the task function.
+
+12
+00:54.820 --> 01:03.070
+Here is the async() equivalent of "Hello Thread".
+We have our task function, which just prints out "hello".
+
+13
+01:04.000 --> 01:10.620
+In the main function we call async().
+We pass the pointer to the hello function as its argument.
+
+14
+01:11.680 --> 01:13.390
+So that will be the task function.
+
+15
+01:14.470 --> 01:17.910
+And this will create a new thread which executes the hello function.
+
+16
+01:20.170 --> 01:21.700
+And there we are! "Hello, Async!"
+
+17
+01:25.330 --> 01:30.820
+One of the advantages of using async() compared to the standard thread is that we can get the return
+
+18
+01:30.820 --> 01:32.290
+value from a task function.
+
+19
+01:33.280 --> 01:35.430
+When we call async(), it returns a future.
+
+20
+01:36.280 --> 01:41.320
+And when we are ready to get the result, we call get() on that future,
+and that will give us the return
+
+21
+01:41.320 --> 01:42.490
+value from the function.
+
+22
+01:44.080 --> 01:50.020
+And there are also wait(), wait_for() and wait_until() if we just want to know that the background test has
+
+23
+01:50.020 --> 01:50.590
+completed.
+
+24
+01:51.220 --> 01:55.720
+So, for example, if we want to make sure that the file has been saved,
+then we could call
+
+25
+01:55.760 --> 01:56.050
+wait().
+
+26
+02:00.030 --> 02:03.040
+Here is an example, which is maybe not a very realistic one(!)
+
+27
+02:04.020 --> 02:06.780
+We're going to compute a Fibonacci number.
+
+28
+02:07.410 --> 02:12.720
+If you are not familiar with the Fibonacci sequence,
+it is a sequence of numbers which starts with one
+
+29
+02:12.720 --> 02:13.260
+and two.
+
+30
+02:14.650 --> 02:20.410
+And then you get the next number by adding the two previous numbers, so the next number is one plus
+
+31
+02:20.410 --> 02:24.790
+two, which is three. The number after that is two plus three, which is five.
+
+32
+02:25.480 --> 02:26.890
+Then three plus five is eight.
+
+33
+02:27.100 --> 02:29.020
+Five plus eight is 13 and so on.
+
+34
+02:30.720 --> 02:35.420
+We are going to implement this by making a recursive call, 
+which will give us the two previous values,
+
+35
+02:36.150 --> 02:41.840
+and then when we get to n == one,
+then that will stop and the recursive functions will return.
+
+36
+02:44.450 --> 02:50.110
+We are going to call this in a thread,
+which is not really very sensible, but it is an example!
+
+37
+02:50.900 --> 02:52.310
+So we are going to call async().
+
+38
+02:53.210 --> 02:59.940
+We give the pointer to the function as the first argument,
+and then 40 is the second argument.
+
+39
+03:00.290 --> 03:02.870
+So that will be passed when we call fibonacci().
+
+40
+03:04.520 --> 03:08.270
+And the return value from this is stored in a future.
+
+41
+03:10.100 --> 03:16.910
+And then we can call get() on this future,
+and that will give us the return value from the Fibonacci
+
+42
+03:16.910 --> 03:17.660
+calculation.
+
+43
+03:20.560 --> 03:25.630
+So we have started the thread, which is executing fibonacci with the argument 40.
+It is going through and
+
+44
+03:25.630 --> 03:27.670
+calling the lower values.
+
+45
+03:30.240 --> 03:34.980
+And 165580141, which I am sure you will all agree is the correct answer :)
+
+46
+03:35.940 --> 03:37.790
+I will leave you to check that for yourselves.
+
+47
+03:42.050 --> 03:48.260
+There are some options we can give to async() which will decide what happens,
+whether a new thread is created
+
+48
+03:48.260 --> 03:51.500
+or the task is run in the same thread that calls async.
+
+49
+03:53.480 --> 04:00.020
+The C++ library provides a couple of flags for this.
+The first one is std::launch_async.
+
+50
+04:00.260 --> 04:05.900
+This will cause a new thread to be created and that will call the task function,
+and the task function
+
+51
+04:05.900 --> 04:08.330
+will be executed as soon as the thread starts up.
+
+52
+04:10.170 --> 04:16.710
+The other one is std::launch_deferred,
+and in this case, the task will be run in the same thread.
+
+53
+04:18.330 --> 04:26.700
+In fact, it will not be executed until get() or wait() and company is called on the returned future and
+
+54
+04:26.700 --> 04:29.700
+at that point the task function is executed.
+
+55
+04:30.450 --> 04:32.170
+So that is lazy evaluation.
+
+56
+04:32.190 --> 04:36.710
+Again, we do not actually do the calculation until we need the results.
+
+57
+04:40.920 --> 04:45.110
+And you can set both the flags using an "or", a single bar |
+
+58
+04:46.850 --> 04:52.400
+And in that case, the implementation will decide whether it wants to start a new thread.
+So it is possible
+
+59
+04:52.700 --> 04:58.880
+if there are a lot of threads already in use, it could run in the current thread, and that is the default
+
+60
+04:58.880 --> 05:00.110
+if you do not provide any option.
+
+61
+05:01.730 --> 05:08.810
+So to use these flags, we pass them as a first argument.
+If we have async(launch_async) that
+
+62
+05:08.870 --> 05:16.220
+will cause the function to be run in a separate thread.
+If we call async(launch_deferred) that will
+
+63
+05:16.220 --> 05:18.230
+cause the function to be run in the same thread.
+
+64
+05:19.100 --> 05:23.390
+And if we just call async(func), then the implementation will decide.
+
+65
+05:26.310 --> 05:32.850
+So let's look at how this affects the behaviour.
+So we have got a thread function here.
+We are going to
+
+66
+05:32.850 --> 05:36.690
+print out the ID of this thread so we can see which thread it is.
+
+67
+05:37.110 --> 05:39.920
+We are also printing out the ID of the main thread.
+
+68
+05:40.350 --> 05:44.670
+So we will be able to tell if the function is executing in a different thread.
+
+69
+05:47.980 --> 05:54.790
+We're going to use async to launch this and we are going to use the different options for launching it.
+
+70
+05:55.150 --> 06:02.380
+We are going to use the async one first.
+And then we are going to get() at the end of the program to give
+
+71
+06:02.380 --> 06:03.240
+us the result.
+
+72
+06:05.350 --> 06:08.230
+So let's see what happens with the async launch policy.
+
+73
+06:13.060 --> 06:18.540
+So you see that the two threads have different IDs.
+So this has caused a new thread to be started.
+
+74
+06:19.930 --> 06:24.220
+The function starts executing before we call get().
+
+75
+06:25.410 --> 06:27.270
+And then we finally have the answer, 42.
+
+76
+06:33.120 --> 06:36.650
+Let's try it now with the deferred option...
+
+77
+06:44.230 --> 06:46.550
+So you can see the two threads have the same ID.
+
+78
+06:46.570 --> 06:50.650
+So this is running the function in the same thread that called async().
+
+79
+06:52.060 --> 06:58.530
+You will also notice that the function does not start executing until we call get().
+I have put some sleeps
+
+80
+06:58.540 --> 07:03.060
+in here to make sure that everything happens in the right order.
+
+81
+07:08.210 --> 07:13.570
+So get() is called first and then the function is executed.
+So that is lazy evaluation again.
+
+82
+07:19.600 --> 07:24.280
+And finally, we are going to use the default so the system will choose that.
+
+83
+07:26.540 --> 07:30.250
+So the two threads have different IDs and the function is executed before we call get().
+
+84
+07:30.470 --> 07:34.240
+So that is the same as launch_async
+and I think you will find that is usually the case.
+
+85
+07:36.540 --> 07:37.680
+Although you cannot rely on it.
+
+86
+07:42.620 --> 07:47.510
+Normally, you would think that a default value for something would be a sensible compromise.
+
+87
+07:49.640 --> 07:55.850
+The problem with the default value for async is that we do not know whether it is going to launch a new
+
+88
+07:55.850 --> 07:59.210
+thread or not, and this can complicate the implementation.
+
+89
+08:01.020 --> 08:07.110
+It is possible that the function could be run concurrently with the thread that calls async(),
+and then,
+
+90
+08:07.110 --> 08:09.750
+in that case, we have to start thinking about possible conflicts.
+
+91
+08:11.760 --> 08:15.910
+It is also possible that wait() or get() could be called on the future in a different thread.
+
+92
+08:16.170 --> 08:17.540
+There is nothing to prevent that.
+
+93
+08:18.450 --> 08:22.220
+And in that case, we have to consider potential conflicts with that thread.
+
+94
+08:23.800 --> 08:29.530
+On the other hand, if it does not launch a new thread, then it is possible that the function might not
+
+95
+08:29.530 --> 08:35.590
+be called at all if there is some path through the code where wait() or get() or some similar function is not called.
+
+96
+08:37.050 --> 08:43.530
+And remember, when the execution is deferred, the function is only called after wait() or get() is called.
+
+97
+08:45.260 --> 08:52.370
+If we want to use thread-local storage, we have a big problem because we do not know which thread's local storage
+
+98
+08:52.370 --> 08:53.230
+is going to be used.
+
+99
+08:56.790 --> 08:57.960
+So what are we to do?
+
+100
+08:58.350 --> 09:04.590
+My recommendation is to always be explicit.
+Always provide a launch option so everyone can understand
+
+101
+09:04.620 --> 09:05.300
+what is happening.
+
+102
+09:07.230 --> 09:12.570
+The situations where you would use the async launch option:
+If the thread has to run in a separate thread
+
+103
+09:12.570 --> 09:18.090
+because launch_async will force it it.
+If the task function is going to use thread-local storage.
+
+104
+09:20.200 --> 09:25.210
+Because in that case, you will know that it has thread-local storage which is unique to that task.
+
+105
+09:25.470 --> 09:27.700
+It is not shared with any other executing code.
+
+106
+09:29.630 --> 09:34.340
+If the task function must be executed, even if you are not going to call get() or wait().
+
+107
+09:35.890 --> 09:41.320
+And finally, the other situation is, if you pass the future on to a different thread and that thread
+
+108
+09:41.320 --> 09:43.480
+is going to call wait_for() or wait_until().
+
+109
+09:46.230 --> 09:52.080
+The situations in which you would use the deferred launch option:
+If you want to make sure that the task
+
+110
+09:52.080 --> 09:54.540
+is run in the thread which calls get() or wait().
+
+111
+09:56.770 --> 10:00.250
+If none of these conditions apply, then it is safe to use the default.
+
+112
+10:01.540 --> 10:03.400
+OK, so that's it for this video.
+
+113
+10:03.820 --> 10:04.760
+I'll see you next time.
+
+114
+10:04.810 --> 10:06.910
+But meanwhile, keep coding!

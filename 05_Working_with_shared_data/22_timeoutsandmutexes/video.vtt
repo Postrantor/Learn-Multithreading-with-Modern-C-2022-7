@@ -1,0 +1,389 @@
+WEBVTT
+
+0
+00:00.300 --> 00:00.870
+Hello again.
+
+1
+00:01.140 --> 00:04.350
+In this video, we are going to look at time outs and mutexes.
+
+2
+00:07.170 --> 00:14.160
+First, we are going to take a slight diversion into recursive mutexes. Sometimes you may run into
+
+3
+00:14.160 --> 00:21.030
+situations where you want to lock a mutex which is already locked, and generally you cannot do that.
+
+4
+00:22.300 --> 00:25.540
+The usual result will be that the program deadlocks.
+
+5
+00:27.490 --> 00:33.610
+C++ provides a recursive_mutex, which can be locked multiple times.
+
+6
+00:34.950 --> 00:42.510
+So you can just call the lock function and call it again. The mutex will not actually be unlocked until
+
+7
+00:42.510 --> 00:45.870
+you have done an unlock() call for every lock() call.
+
+8
+00:47.520 --> 00:52.470
+If you are not sure that you're going to be able to do that manually, then you can use lock_guard, a
+
+9
+00:52.470 --> 00:57.510
+unique_lock or scoped_lock to make sure that the mutex eventually gets unlocked.
+
+10
+00:58.920 --> 01:04.920
+And of course, you would give recursive mutex as the parameter type for the lock
+
+11
+01:04.990 --> 01:06.120
+guard or unique lock.
+
+12
+01:08.070 --> 01:13.290
+Usually when you think you want to use a recursive mutex, it means there is something wrong with the
+
+13
+01:13.290 --> 01:17.180
+design and you need to think a bit harder about your code.
+
+14
+01:17.730 --> 01:20.280
+But there are occasionally situations where it is useful.
+
+15
+01:23.510 --> 01:28.520
+I have got some code here, which is an extremely inefficient way to calculate a factorial. I am sure
+
+16
+01:28.520 --> 01:34.510
+you have all seen the basic recursive implementation where you have a factorial of n.
+
+17
+01:34.910 --> 01:38.600
+It calls the factorial of n minus one and multiplies the result by n.
+
+18
+01:39.350 --> 01:41.000
+And that factorial(n-1)
+
+19
+01:41.000 --> 01:45.110
+will call factorial(n-2) and multiply that by n minus one and so on.
+
+20
+01:46.690 --> 01:55.270
+If for some bizarre reason you want to calculate a factorial in a thread and lock the recursive calls, then
+
+21
+01:55.330 --> 01:57.700
+you would need to use a recursive mutex.
+
+22
+01:58.630 --> 01:59.380
+So here it is.
+
+23
+01:59.380 --> 02:01.420
+We have the recursive call.
+
+24
+02:03.350 --> 02:09.560
+And then we lock the mutex just before we call the function recursively. I am using a lock_guard here,
+
+25
+02:09.950 --> 02:13.970
+but whatever it is, there needs to be an unlock after the function returns.
+
+26
+02:16.010 --> 02:22.520
+And of course, we have the terminating condition. If the argument is one or less, then we stop recursing
+
+27
+02:22.520 --> 02:26.660
+and start returning and then all the locks will be unlocked.
+
+28
+02:28.140 --> 02:32.270
+I have also provided a main function, which is going to call this in two separate threads.
+
+29
+02:33.290 --> 02:34.460
+So let's see what happens.
+
+30
+02:36.910 --> 02:43.270
+Well, the first thread has run, and then it does these calculations with the lock and it starts returning.
+
+31
+02:43.300 --> 02:46.900
+So this is going to unlock, this is going to unlock and so on.
+
+32
+02:47.980 --> 02:56.200
+So there we are, we have done it all, with no deadlocks. If we had used a normal mutex... (remember to
+
+33
+02:56.200 --> 02:57.160
+change this one as well!)
+
+34
+03:01.770 --> 03:02.340
+There we are!
+
+35
+03:03.200 --> 03:04.480
+It all goes horribly wrong.
+
+36
+03:07.140 --> 03:12.930
+And the reason for that is that every time we call this function, we lock the same mutex and you can
+
+37
+03:12.930 --> 03:14.190
+only lock a mutex once.
+
+38
+03:16.340 --> 03:22.550
+So on to timed mutexes. We have seen with plain mutexes you can either lock(), in which case the
+
+39
+03:23.240 --> 03:29.150
+mutex will wait until the lock becomes available or else you can call try_lock(), which will return
+
+40
+03:29.150 --> 03:32.070
+immediately, even if the lock is not available.
+
+41
+03:34.240 --> 03:40.980
+There are timed mutexes. In fact, C++ has quite a zoo full of mutexes and things to do with mutexes,
+
+42
+03:40.990 --> 03:43.890
+so I'm just trying to introduce them gradually.
+
+43
+03:45.550 --> 03:51.790
+With a timed mutex, it has the try_lock() member function, which does not wait at all. It also has a
+
+44
+03:51.790 --> 03:59.740
+try_lock_for() member function, which will wait for a certain interval, for example, 500 milliseconds.
+
+45
+04:00.550 --> 04:07.450
+And a try_lock_until() member function, which will wait until a certain time point.
+
+46
+04:07.750 --> 04:10.270
+So, for example, 12 seconds past the minute.
+
+47
+04:11.970 --> 04:19.830
+And these have the same interface as try_lock(). If the lock is available, then it'll return true; if
+
+48
+04:19.830 --> 04:21.750
+it cannot get the lock, it will return false.
+
+49
+04:23.900 --> 04:27.130
+I have rewritten the program we used with try_lock().
+
+50
+04:28.200 --> 04:35.430
+This time it is using try_look_for() and I have given it a duration of 100 milliseconds.
+
+51
+04:36.500 --> 04:38.330
+The rest of the program is the same.
+
+52
+04:40.140 --> 04:43.290
+So we have task one which locks it and sleeps.
+
+53
+04:45.980 --> 04:54.710
+Task two, which tries to get the lock repeatedly. If it cannot get the lock, it tries again. And then
+
+54
+04:54.710 --> 04:57.530
+a main function, which starts these two threads.
+
+55
+04:58.920 --> 04:59.790
+So there we are.
+
+56
+05:03.740 --> 05:09.920
+The first thread locks the mutex, then the second thread tries to get it.
+
+57
+05:11.500 --> 05:18.280
+It cannot lock the mutex because the first thread has already locked it. And then it keeps trying every
+
+58
+05:18.280 --> 05:25.060
+hundred milliseconds and eventually the first thread will unlock the mutex and the second thread succeeds
+
+59
+05:25.060 --> 05:26.080
+in getting the lock.
+
+60
+05:29.800 --> 05:31.580
+This may all sound a bit familiar.
+
+61
+05:31.870 --> 05:38.020
+In fact, we have seen that unique_lock will provide this functionality for any mutex not just timed
+
+62
+05:38.020 --> 05:38.800
+mutexes.
+
+63
+05:39.340 --> 05:41.890
+So what is the point of having timed mutexes?
+
+64
+05:43.100 --> 05:49.460
+I suppose the reason is, if you want the functionality without the extra overhead of unique_lock, you
+
+65
+05:49.460 --> 05:52.640
+could use a lock_guard with a timed mutex.
+
+66
+05:54.630 --> 06:01.620
+There's also a global function, try_lock(). You can pass multiple mutexes to that.
+
+67
+06:01.950 --> 06:04.640
+It will try to lock them in the order that you pass them.
+
+68
+06:05.580 --> 06:10.920
+If it cannot obtain all the locks, it returns immediately and it will give you a return value, which
+
+69
+06:10.920 --> 06:13.580
+indicates which mutex caused the problem.
+
+70
+06:15.090 --> 06:20.400
+The index is zero based, so it is zero for the first argument, one for the second and so on.
+
+71
+06:21.390 --> 06:24.690
+And on success, confusingly, it returns minus one.
+
+72
+06:27.950 --> 06:36.590
+How do you get these timeouts? The chrono library provides several clocks which we can use for durations and time points.
+
+73
+06:37.670 --> 06:42.890
+There is a system clock which will return whatever time the operating system thinks it is.
+
+74
+06:44.070 --> 06:50.480
+There are things like leap seconds which can cause the system clock to jump ahead by two seconds occasionally.
+
+75
+06:51.120 --> 06:53.610
+Usually on New Year's Eve when nobody is noticing.
+
+76
+06:54.970 --> 06:59.590
+It is also possible that the system time could be changed, either because someone has changed it at the
+
+77
+06:59.590 --> 07:06.610
+console or there's some kind of synchronization that keeps the time in sync with an atomic clock.
+
+78
+07:07.740 --> 07:13.080
+This will always return the correct time as far as the operating system is able to determine it.
+
+79
+07:13.710 --> 07:15.620
+So you should use that for time points.
+
+80
+07:16.800 --> 07:22.680
+There is also a steady clock, which, as the name suggests, it increases steadily. It does not go backwards,
+
+81
+07:22.680 --> 07:24.000
+unlike the system clock.
+
+82
+07:25.050 --> 07:30.330
+So this will always give a precise interval and we should use that for intervals.
+
+83
+07:32.160 --> 07:38.010
+One other thing to bear in mind is that try_lock for() and try_ lock_until() may not actually return
+
+84
+07:38.010 --> 07:44.520
+when you expect them to. They may be delayed by the scheduler if the scheduler is running something
+
+85
+07:44.520 --> 07:48.560
+else, or it thinks that your thread is not sufficiently important to be woken up just yet.
+
+86
+07:50.090 --> 07:55.820
+OK, so let's look at try_lock_until(). We are going to use the system clock.
+
+87
+07:57.340 --> 08:00.740
+And we are going to say that we have a deadline which is 90 milliseconds from now.
+
+88
+08:00.760 --> 08:03.790
+So system_clock::now() plus 90 milliseconds.
+
+89
+08:05.360 --> 08:11.830
+now() will return the current time. So then this thread is going to try the lock until the deadline.
+
+90
+08:12.740 --> 08:19.490
+If it fails, it will try again and it is going to keep on, missing these deadlines, until eventually it
+
+91
+08:19.490 --> 08:22.560
+gets the lock. The rest of the program is exactly the same.
+
+92
+08:23.960 --> 08:27.310
+So let's try that. So we get the same output.
+
+93
+08:27.320 --> 08:32.620
+The first task locks the mutex, the second task keeps trying to get it.
+
+94
+08:33.410 --> 08:37.370
+Eventually, the first task releases the lock and the second task can run.
+
+95
+08:39.840 --> 08:41.550
+OK, so that's it for this video.
+
+96
+08:42.150 --> 08:45.000
+I'll see you next time, but meanwhile, keep coding!

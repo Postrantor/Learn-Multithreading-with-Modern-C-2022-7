@@ -1,0 +1,421 @@
+WEBVTT
+
+0
+00:00.180 --> 00:00.720
+Hello again.
+
+1
+00:01.020 --> 00:08.340
+In this video, we are going to look at shared data initialization. There are various ways we can create
+
+2
+00:08.340 --> 00:09.210
+shared data.
+
+3
+00:09.600 --> 00:15.960
+We could use a global variable or a static variable, which is declared in the namespace scope.
+
+4
+00:16.710 --> 00:22.920
+And that could be shared by all the threads in the program, including main(). We could have a class member
+
+5
+00:22.920 --> 00:29.420
+which is declared static and that is potentially shared by all threads which execute a member function
+
+6
+00:29.430 --> 00:30.180
+of the class.
+
+7
+00:31.550 --> 00:36.980
+And then finally, we can have a local variable in a task function and we declare that variable static.
+
+8
+00:37.760 --> 00:41.480
+And this is shared by all threads which execute that function.
+
+9
+00:43.960 --> 00:46.660
+There are actually two different rules for initialization.
+
+10
+00:47.170 --> 00:53.440
+One is for local variables, which we will look at in a minute, but for everything else, the variable is initialized
+
+11
+00:53.710 --> 00:54.980
+when the program starts up.
+
+12
+00:55.870 --> 01:00.450
+And at that point, there is only going to be one thread running. main() has not even been called yet.
+
+13
+01:00.940 --> 01:04.600
+So there cannot be a data race because there are not any conflicting threads.
+
+14
+01:08.640 --> 01:16.080
+When we have a local variable, so we have a function with a static local variable, C++ says this variable
+
+15
+01:16.410 --> 01:20.520
+will be initialized the first time that the program executes this code.
+
+16
+01:21.360 --> 01:24.030
+And in a single threaded program, that is all very straightforward.
+
+17
+01:24.390 --> 01:26.100
+But what happens when we have threads?
+
+18
+01:27.120 --> 01:32.520
+I would like you to pause the video for a moment and think about whether there could be any issues with
+
+19
+01:32.520 --> 01:32.850
+this.
+
+20
+01:38.250 --> 01:41.610
+Just in case you have forgotten, here is the definition of a data race.
+
+21
+01:42.740 --> 01:44.870
+So we have potentially conflicting accesses.
+
+22
+01:46.150 --> 01:52.090
+We could have multiple threads accessing the shared local variable, and one or more of these threads could
+
+23
+01:52.090 --> 01:53.410
+be trying to initialize it.
+
+24
+01:55.360 --> 02:01.750
+So we have the usual potential for a data race. But do we actually get one?
+
+25
+02:03.670 --> 02:09.460
+In older versions of C++, there was no acknowledgement of the existence of threads, so the behaviour
+
+26
+02:09.460 --> 02:10.300
+was undefined.
+
+27
+02:12.070 --> 02:19.980
+In C++11, it actually specifies that only one thread can perform the initialization. If any other thread
+
+28
+02:20.080 --> 02:25.210
+tries to access the local variable while it is being initialized, it will be blocked until the first thread
+
+29
+02:25.210 --> 02:26.770
+has finished initializing it.
+
+30
+02:27.670 --> 02:34.870
+So this means that the initialization "happens before" any other access and therefore we do not get a data race.
+
+31
+02:36.190 --> 02:39.010
+Obviously, that only applies when we are initializing the variable.
+
+32
+02:39.430 --> 02:44.650
+If we modify it later on, then it is exactly the same as any other type of variable.
+
+33
+02:45.400 --> 02:47.770
+And we need to protect against a data race.
+
+34
+02:51.250 --> 02:56.970
+Moving away from built in types, a more interesting example of shared data is the Singleton class.
+
+35
+02:58.180 --> 03:04.240
+There is a famous book about design patterns, and if you ask people for an example of a design pattern,
+
+36
+03:04.660 --> 03:08.800
+they will say Singleton, even if they have never read the book or heard of any other design pattern.
+
+37
+03:10.520 --> 03:15.590
+A singleton is a class that is written in such a way that there can only be one global instance of it in the
+
+38
+03:15.590 --> 03:21.030
+program. You would use this if you need to have only one instance of something.
+
+39
+03:21.350 --> 03:26.750
+For example, if you have a class that writes to an audit trail, there is no point having different
+
+40
+03:26.750 --> 03:28.760
+instances writing to the same log file.
+
+41
+03:29.120 --> 03:30.570
+That just complicates things.
+
+42
+03:32.930 --> 03:38.930
+You would implement a Singleton class in C++ by deleting the copy and move operators, so that prevents
+
+43
+03:38.930 --> 03:46.520
+the program from creating a new instance and then you provide a global function which returns the instance
+
+44
+03:46.520 --> 03:47.060
+of the class.
+
+45
+03:49.040 --> 03:51.860
+This will check if the instance already exists.
+
+46
+03:52.190 --> 03:55.460
+If it does not exist, it will create it and initialize it and then return it.
+
+47
+03:56.210 --> 03:58.640
+If it already exists, then it just returns it.
+
+48
+04:00.650 --> 04:04.450
+So this is a classic 1990s style implementation of a singleton.
+
+49
+04:05.330 --> 04:07.480
+We have the class that is defined somewhere.
+
+50
+04:08.360 --> 04:12.680
+We have a global variable, which is a pointer to the Singleton instance.
+
+51
+04:14.590 --> 04:20.580
+And we initialize this with the null pointer to indicate that it is not pointing to a valid Singleton
+
+52
+04:20.590 --> 04:21.110
+instance.
+
+53
+04:22.450 --> 04:24.220
+This is a global variable.
+
+54
+04:24.340 --> 04:28.980
+So it's going to be initialized at runtime before any separate threads are started.
+
+55
+04:30.220 --> 04:34.080
+So there are no issues about data races with this assignment here.
+
+56
+04:36.090 --> 04:39.430
+Then we have a function which returns a pointer to the singleton.
+
+57
+04:41.300 --> 04:44.780
+This will check if the instance has been initialized.
+
+58
+04:46.040 --> 04:52.040
+If the variable single is equal to null pointer, then the instance has not been initialized, so it will
+
+59
+04:52.040 --> 04:58.730
+create it and return it and initialize it, otherwise it will just return it straightaway.
+
+60
+05:00.190 --> 05:06.340
+And if you have a single threaded program, it all works perfectly. However, if we have multiple threads,
+
+61
+05:06.580 --> 05:12.550
+then there is a data race and I would like you to pause the video again and try and work out where the
+
+62
+05:12.550 --> 05:13.390
+data race is.
+
+63
+05:17.590 --> 05:18.790
+OK, did you find it?
+
+64
+05:19.990 --> 05:23.980
+There are actually two data races in here, but the second one is rather subtle.
+
+65
+05:24.370 --> 05:26.280
+We will talk about it in another video.
+
+66
+05:26.770 --> 05:30.400
+But if you spotted that one as well, then put a gold star on your screen!
+
+67
+05:34.550 --> 05:39.650
+The race condition is in here. If we have multiple threads calling this function, then we have multiple threads
+
+68
+05:39.650 --> 05:44.240
+which are accessing "single" and the possibility that threads are modifying "single".
+
+69
+05:46.930 --> 05:50.410
+I have actually spared you the data race [definition]. I hope it's still fresh from the last time!
+
+70
+05:52.450 --> 05:59.380
+So what can we do about this? As it happens, the guarantees about initializing static local variables
+
+71
+05:59.380 --> 06:05.770
+in C++11 mean that it's very straightforward to write a function that returns a Singleton instance.
+
+72
+06:07.660 --> 06:08.230
+This is it.
+
+73
+06:08.380 --> 06:09.170
+Yes, all of it!
+
+74
+06:10.420 --> 06:12.460
+We don't have the global pointer anymore.
+
+75
+06:13.120 --> 06:17.460
+We just have a static instance, which is a local variable in the Singleton function.
+
+76
+06:18.190 --> 06:21.520
+And then instead of returning a pointer, we return a reference to it.
+
+77
+06:23.790 --> 06:24.890
+So how does this work?
+
+78
+06:27.210 --> 06:34.200
+The rules for initializing local static variables say that the first thread to execute this code will
+
+79
+06:34.200 --> 06:38.590
+initialize it and it cannot be interrupted until it has finished the initialization.
+
+80
+06:39.510 --> 06:44.280
+So by the time another thread runs, this single variable has already been initialized.
+
+81
+06:45.520 --> 06:51.070
+So the first time through, it is going to initialize this variable and return it. The second time through, it is just
+
+82
+06:51.070 --> 06:52.150
+going to return it.
+
+83
+06:55.500 --> 07:03.060
+So here is a Singleton instance. It is just a very trivial class.
+I have deleted the copy constructor,
+
+84
+07:03.360 --> 07:07.950
+copy assignment operator, move constructor and move assignment operator.
+
+85
+07:09.990 --> 07:15.500
+These have private access, so in fact, they do not actually need to be deleted. Because they are private,
+
+86
+07:15.510 --> 07:21.920
+they cannot be called from outside the class. But putting equals delete means it is obvious that I
+
+87
+07:21.930 --> 07:24.390
+want these functions never to be called.
+
+88
+07:25.550 --> 07:27.680
+This, by the way, is a C++11 feature.
+
+89
+07:29.910 --> 07:35.220
+I have got a constructor, which is just a trivial one. It will print something out, so we can see if the
+
+90
+07:35.220 --> 07:36.300
+constructor has been called.
+
+91
+07:37.840 --> 07:42.430
+I also have a forward declaration for the function to get the Singleton instance.
+
+92
+07:46.060 --> 07:49.000
+That function is just the same as the one on the slide.
+
+93
+07:51.540 --> 07:57.150
+Then there is a main function. It starts up some threads.
+The task function for the threads will just
+
+94
+07:57.150 --> 08:02.670
+call get_singleton() and then we are going to print out the address of this instance, which is returned
+
+95
+08:02.670 --> 08:06.300
+by the function,
+so we can see whether it really is the same object.
+
+96
+08:08.110 --> 08:09.670
+OK, let's try that out.
+
+97
+08:11.290 --> 08:18.220
+So there we are, we get the constructor output once, so that looks as though the object has only
+
+98
+08:18.220 --> 08:22.120
+been created once,
+and we get the same address.
+
+99
+08:23.000 --> 08:27.760
+(Obviously, we get the interleaving because the output hasn't been protected by a mutex)
+
+100
+08:30.320 --> 08:33.260
+Let's just run it once again, that is a slightly nicer version.
+
+101
+08:35.010 --> 08:36.710
+OK, so that is it for this video.
+
+102
+08:37.220 --> 08:38.140
+I will see you next time.
+
+103
+08:38.150 --> 08:40.460
+But meanwhile, keep coding!

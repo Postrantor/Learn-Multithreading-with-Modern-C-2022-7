@@ -1,0 +1,224 @@
+1
+00:00:00,210 --> 00:00:00,810
+Hello again.
+
+2
+00:00:01,020 --> 00:00:09,000
+In this video, we are going to look at the unique_lock class. In the last video, we looked at the lock
+3
+00:00:09,060 --> 00:00:09,360
+guard.
+4
+00:00:10,020 --> 00:00:17,460
+If we create a lock_guard instance, then it will automatically release the look at the end of the scope, even if
+5
+00:00:17,460 --> 00:00:22,350
+the function returns due to an exception or a break or an early return.
+6
+00:00:24,060 --> 00:00:28,050
+The problem is that the unlock does not occur until the end of the scope.
+7
+00:00:28,830 --> 00:00:35,880
+If we have some code which is not critical but is in the same scope, such as this sleep, for example,
+8
+00:00:36,150 --> 00:00:40,080
+then the mutex will remain locked while we execute that code.
+9
+00:00:40,530 --> 00:00:44,790
+And while this is locked, no other thread can execute the critical region.
+10
+00:00:45,240 --> 00:00:47,850
+So we are holding up the rest of the threads.
+11
+00:00:49,410 --> 00:00:54,840
+One way to address this: we could put the lock_guard into its own scope within the critical region,
+12
+00:00:56,100 --> 00:01:00,990
+and then this code does not get executed until the mutex has been released.
+13
+00:01:01,560 --> 00:01:03,510
+So just to prove that that works...
+14
+00:01:05,490 --> 00:01:05,910
+Good!
+15
+00:01:09,650 --> 00:01:15,880
+When it comes down to the basics, unique_lock and lock_guard do the same thing. The constructor
+16
+00:01:15,890 --> 00:01:20,120
+will take a mutex and lock it and the destructor will unlock
+17
+00:01:20,120 --> 00:01:26,990
+the mutex. unique_lock also has an unlock() member function so we can call that after the critical region
+18
+00:01:27,290 --> 00:01:30,890
+to avoid the problem of blocking other threads while doing non-critical work.
+19
+00:01:32,810 --> 00:01:38,960
+If the function returns before calling unlock(), then the unique_lock destructor will ensure that
+20
+00:01:38,960 --> 00:01:40,370
+the mutex is unlocked.
+21
+00:01:40,790 --> 00:01:46,280
+If it does return normally and we unlock the mutex, then the destructor will check.
+22
+00:01:46,820 --> 00:01:52,460
+It will see that the mutex has already been unlocked and it will not unlock it twice, which is a very
+23
+00:01:52,460 --> 00:01:53,200
+bad thing to do.
+24
+00:01:55,370 --> 00:01:56,870
+So let's see how this works.
+25
+00:01:57,320 --> 00:01:59,780
+So we create a unique lock...
+26
+00:02:03,130 --> 00:02:03,620
+OK.
+27
+00:02:04,420 --> 00:02:10,450
+And then after we execute the critical region, we unlock it. lk dot unlock.
+28
+00:02:13,030 --> 00:02:14,460
+So let's see how that works.
+29
+00:02:16,040 --> 00:02:24,540
+Yep, there we go. Again, we have no unwanted blocking. So that is what we do, we create the unique_lock
+30
+00:02:24,590 --> 00:02:27,610
+instance and then we unlock it after the critical region.
+31
+00:02:30,470 --> 00:02:33,350
+unique_lock has more to it than the unlock() member function.
+32
+00:02:33,890 --> 00:02:37,370
+There is also quite a variety of different ways in which you can construct it.
+33
+00:02:38,750 --> 00:02:44,840
+The way that we constructed just called the lock member function on the mutex, which is the default.
+34
+00:02:45,980 --> 00:02:48,640
+You can also try to get the lock, but not wait for it.
+35
+00:02:49,920 --> 00:02:52,300
+There are also some options with time outs.
+36
+00:02:52,670 --> 00:02:55,330
+You can try to get the lock for a certain amount of time.
+37
+00:02:55,850 --> 00:03:00,290
+So if you can not get it within half a second, for the sake of argument, then you give up.
+38
+00:03:01,840 --> 00:03:08,350
+You can also wait until a certain point in time, so if it is 11.34 seconds past
+39
+00:03:08,350 --> 00:03:10,940
+the minute, you can wait until it is 12 minutes
+40
+00:03:10,960 --> 00:03:11,500
+exactly.
+41
+00:03:12,820 --> 00:03:18,270
+You can even not lock the mutex at all, which presumably means that you want to lock it later on.
+42
+00:03:19,740 --> 00:03:25,260
+In effect, you can also have move semantics, the caller can give you a mutex that is already locked
+43
+00:03:25,560 --> 00:03:28,980
+and you acquire ownership of that lock on the mutex.
+44
+00:03:31,260 --> 00:03:36,740
+There are some second arguments we can give to the constructor for this. The defer_lock argument
+45
+00:03:36,930 --> 00:03:40,100
+will prevent the mutex from being locked immediately.
+46
+00:03:41,750 --> 00:03:43,430
+We can call lock() later on.
+47
+00:03:44,630 --> 00:03:49,640
+We can also call the global lock() function with the unique lock instance as an argument.
+48
+00:03:51,320 --> 00:03:58,100
+If we pass the adopt_lock argument, then the object will take ownership of a mutex that is already
+49
+00:03:58,100 --> 00:03:58,490
+locked.
+50
+00:04:00,090 --> 00:04:06,030
+As with double unlocking, double locking is very bad unless you have a recursive mutex, which we will
+51
+00:04:06,090 --> 00:04:07,400
+look at a bit later.
+52
+00:04:09,210 --> 00:04:15,900
+And try_lock will call the try_lock member function instead of lock. You may be wondering with
+53
+00:04:15,900 --> 00:04:20,040
+these versions that do not lock the mutex immediately, how does that work?
+54
+00:04:21,000 --> 00:04:22,660
+How do you know if it has been locked or not?
+55
+00:04:23,430 --> 00:04:29,610
+The answer is that there's a member function owns_lock() and you can call that later on to check if the mutex
+56
+00:04:30,150 --> 00:04:31,050
+has been locked.
+57
+00:04:35,450 --> 00:04:42,200
+As with many of the classes in the concurrency library, unique_lock instances cannot be copied, but
+58
+00:04:42,200 --> 00:04:48,800
+they can be moved. So we can get a lock on a mutex and transfer it to a different unique_lock instance.
+59
+00:04:50,250 --> 00:04:52,680
+Although that can only be done within the same thread.
+60
+00:04:54,680 --> 00:05:00,680
+This gives us the opportunity of writing something which follows the factory design pattern. We can
+61
+00:05:00,680 --> 00:05:07,400
+write a function which creates a lock and returns it, and the type of lock that it will create will depend
+62
+00:05:07,430 --> 00:05:08,270
+on its arguments.
+63
+00:05:09,970 --> 00:05:12,550
+So we could have locks on different types of mutex.
+64
+00:05:13,580 --> 00:05:15,510
+Or we could have different types of look.
+65
+00:05:17,530 --> 00:05:24,370
+The caller of the function will now own that lock and will be responsible for unlocking it, or they
+66
+00:05:24,370 --> 00:05:26,310
+can just let it go out of scope.
+67
+00:05:29,960 --> 00:05:35,000
+So we now know about quite a few different lock objects.
+Which one of these should we use?
+68
+00:05:35,930 --> 00:05:39,500
+Well, unique_lock is the most powerful, but it has the most overhead.
+69
+00:05:40,370 --> 00:05:45,290
+So I would recommend using the lock_guard if you just want to lock a single
+70
+00:05:45,290 --> 00:05:47,000
+mutex to the end of the scope.
+71
+00:05:48,270 --> 00:05:53,520
+If you want to lock more than one mutex to the end of the scope, then use scoped_lock.
+72
+00:05:56,040 --> 00:06:01,530
+Only use unique_lock if you need the extra features or if you need to unlock within the scope.
+73
+00:06:03,400 --> 00:06:09,430
+OK, so that's it for this video. Next time, I think, we are going to learn more about mutexes, but until
+74
+00:06:09,430 --> 00:06:10,990
+then, keep coding!

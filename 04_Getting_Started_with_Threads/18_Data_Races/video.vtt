@@ -1,0 +1,743 @@
+WEBVTT
+
+0
+00:00.150 --> 00:00.730
+Hello again.
+
+1
+00:01.020 --> 00:06.510
+In this video, we are going to look at data races. I am going to show you an example of a data race
+
+2
+00:06.720 --> 00:09.260
+and then discuss the kinds of problems that they can cause.
+
+3
+00:10.530 --> 00:13.170
+So we remember the definition of a data race?
+
+4
+00:13.260 --> 00:19.340
+It is when we have accesses from multiple threads which are not ordered or atomic.
+
+5
+00:21.270 --> 00:22.080
+So here is the code
+
+6
+00:22.080 --> 00:24.150
+that I am going to use to demonstrate this.
+
+7
+00:24.660 --> 00:27.900
+It is quite similar to the example in the last video.
+
+8
+00:28.410 --> 00:31.860
+We are going to have three threads which print a message to the screen.
+
+9
+00:33.030 --> 00:38.580
+In the last video, I was careful to make sure that the threads could not print to the screen at the
+
+10
+00:38.580 --> 00:40.590
+same time, by putting sleeps in.
+
+11
+00:42.320 --> 00:47.810
+And in effect, that means the threads run one after the other. In this case, I actually want the threads
+
+12
+00:47.840 --> 00:50.540
+to try to print to the screen at the same time.
+
+13
+00:52.040 --> 01:00.020
+To do that, I have broken up the print statement into separate outputs of each character. So the thread
+
+14
+01:00.020 --> 01:02.870
+could be interrupted between each of these function calls [to operator <<].
+
+15
+01:04.510 --> 01:09.910
+There are three function calls as opposed to one, so that is three times as many opportunities to be interrupted.
+
+16
+01:11.020 --> 01:17.050
+And I have also put a sleep in here, which will give the scheduler more opportunities to interrupt threads
+
+17
+01:17.050 --> 01:18.910
+and let other threads run.
+
+18
+01:21.710 --> 01:23.980
+So let's see what happens when we run this.
+
+19
+01:25.100 --> 01:27.820
+That is an extremely boring example!
+
+20
+01:29.720 --> 01:30.840
+OK, this one is better.
+
+21
+01:31.520 --> 01:39.800
+So the threat that prints "abc" runs first, it gets to print "a" and "b", then it gets interrupted before it can
+
+22
+01:39.800 --> 01:41.780
+do its final output
+
+23
+01:41.780 --> 01:48.650
+operator call. Then the "xyz" thread and the "def" thread both run and print all their output.
+
+24
+01:49.700 --> 01:54.980
+And then the "abc" thread wakes up again and it is able to output the final character.
+
+25
+01:57.860 --> 02:02.780
+So one of the things about data races is that they are not easily reproducible.
+
+26
+02:05.580 --> 02:11.370
+And that does not look like a data race at all! So it's like undefined behaviour, not necessarily predictable
+
+27
+02:11.370 --> 02:14.070
+and it can look as though everything is working fine.
+
+28
+02:19.730 --> 02:26.270
+OK. There is another one. So I think you've got the idea by now.
+This is one that I prepared earlier,
+
+29
+02:26.300 --> 02:28.040
+as the Children's TV program says.
+
+30
+02:29.060 --> 02:33.800
+So you can see here we had interleaving where the first thread prints "a"
+
+31
+02:35.110 --> 02:40.420
+and it gets interrupted, the second thread prints "d", the first thread runs again and prints "b", the
+
+32
+02:40.420 --> 02:42.340
+second thread runs again and prints "e"
+
+33
+02:42.910 --> 02:43.450
+and "f".
+
+34
+02:43.570 --> 02:44.080
+And then
+
+35
+02:44.920 --> 02:53.470
+the first thread can run and print "c". So the interleaving process: threads appear to run in between
+
+36
+02:53.770 --> 02:54.610
+other threads.
+
+37
+02:54.760 --> 03:02.260
+So we have the "abc" thread running here and the "def" thread appears to run in between what the "abc" thread
+
+38
+03:02.260 --> 03:02.710
+is doing.
+
+39
+03:04.450 --> 03:05.710
+And that is called interleaving.
+
+40
+03:09.760 --> 03:17.380
+This oval is meant to be the program, this squiggle is meant to be one of the threads and this is meant
+
+41
+03:17.380 --> 03:18.340
+to be another one of the threads.
+
+42
+03:19.210 --> 03:27.850
+So if you imagine this is the "abc" thread and this is the "def" thread, this thread gets to run prints
+
+43
+03:28.240 --> 03:30.480
+"a" to the screen and it gets interrupted.
+
+44
+03:31.900 --> 03:35.470
+Then this thread can run, it prints "d" on the screen.
+
+45
+03:35.470 --> 03:36.580
+Then it gets interrupted.
+
+46
+03:37.150 --> 03:40.170
+And this thread runs again, prints "b" and so on.
+
+47
+03:40.480 --> 03:43.330
+So we end up with this interleaved output.
+
+48
+03:49.920 --> 03:57.030
+So we had a data race. We have several threads which are trying to access the same location, in this
+
+49
+03:57.030 --> 04:03.630
+case, the output object cout. There was no ordering between the threads, so we did not have them
+
+50
+04:03.630 --> 04:05.340
+"happening before" each other.
+
+51
+04:05.790 --> 04:14.550
+And the access was not atomic. In our program, we saw interleaved output, but that was quite lucky, really.
+
+52
+04:15.330 --> 04:17.130
+iostream is specially designed
+
+53
+04:17.400 --> 04:23.280
+so nothing worse than that can happen, if you have threads trying to write to an iostream at the same time.
+
+54
+04:25.250 --> 04:32.240
+You can get much worse consequences. For example, the results of computations can be incorrect. The
+
+55
+04:32.240 --> 04:36.010
+program flow can be incorrect, so it does not execute in the way that it should do.
+
+56
+04:37.190 --> 04:43.870
+We can get torn writes and reads, which mean that data is corrupted. And we can get objects which
+
+57
+04:43.880 --> 04:46.100
+are not being properly constructed or destroyed.
+
+58
+04:48.110 --> 04:55.580
+So let's go through these. By the way, the code in these examples is deliberately bad.
+I do not recommend
+
+59
+04:55.580 --> 04:56.780
+that you write code like this!
+
+60
+04:57.530 --> 05:02.360
+The reason I have done this is to demonstrate the problem in a very short, simple bit of code.
+
+61
+05:05.580 --> 05:11.940
+We have a thread function which is doing some calculations on a shared variable x. So it does one
+
+62
+05:11.940 --> 05:17.640
+calculation here, the statement to calculate a, and another one to calculate b. If the thread is interrupted
+
+63
+05:17.640 --> 05:26.040
+between these two statements and another thread runs and changes the value of x, then the value of b is
+
+64
+05:26.040 --> 05:30.830
+going to be calculated using a different value of x from the one that was used to calculate a.
+
+65
+05:31.590 --> 05:34.650
+So the results a and b are going to be inconsistent.
+
+66
+05:36.000 --> 05:38.620
+And this does not just happen between statements.
+
+67
+05:38.850 --> 05:44.550
+It can also happen within statements. As we saw in the print program where we have output operator
+
+68
+05:44.550 --> 05:49.560
+calls and threads could be interrupted between calling successive output operations.
+
+69
+05:51.170 --> 05:56.780
+For example, if we're squaring x, then adding two times x to it, and adding one, that is two multiplication
+
+70
+05:56.780 --> 05:58.400
+operations and two additions.
+
+71
+05:59.840 --> 06:02.600
+And the thread could be interrupted between any of those.
+
+72
+06:04.870 --> 06:10.060
+So when we are calculating x squared, we could use one value of x here. Then if we are interrupted
+
+73
+06:11.240 --> 06:15.430
+before doing the multiplication, then we could use a different value of x here.
+
+74
+06:19.390 --> 06:24.790
+Incorrect program flow. We are calculating a square root. We want to be careful and make sure that
+
+75
+06:24.790 --> 06:29.250
+the value is positive because it is an int and ints can have negative values.
+
+76
+06:29.500 --> 06:33.010
+And if we take the square root of a negative number, we get a runtime error.
+
+77
+06:35.110 --> 06:39.040
+So we test if it is safe to use x and then we take its square root.
+
+78
+06:40.570 --> 06:45.970
+If the threat gets interrupted between doing the test and doing the square root and another thread sets
+
+79
+06:45.970 --> 06:50.080
+the value of x to be negative, then we are going to get a run time exception here.
+
+80
+06:50.080 --> 06:52.160
+But how is that possible?
+
+81
+06:52.210 --> 06:53.560
+We checked the value of x, didn't we.
+
+82
+06:56.840 --> 06:57.710
+Incorrect program flow.
+
+83
+06:59.270 --> 07:05.690
+We have a switch statement where we call different functions, depending on the value of x. We want
+
+84
+07:05.690 --> 07:10.360
+to make sure that x is within range because our case statements go from zero to nine.
+
+85
+07:10.760 --> 07:13.460
+So we check the value of x before we go into the switch.
+
+86
+07:14.240 --> 07:20.540
+And - maybe you've guessed by now - if the thread gets interrupted between doing the check by some other
+
+87
+07:20.540 --> 07:25.940
+thread that changes the value of x, then this is not going to work as expected.
+
+88
+07:26.960 --> 07:32.620
+If it sets x to 10, then none of the cases will match and it will just jump over and out of the switch
+
+89
+07:32.630 --> 07:33.110
+statement.
+
+90
+07:35.090 --> 07:41.810
+And for bonus points, there is an even nastier bug hiding in here. Compilers are allowed to do lots
+
+91
+07:41.810 --> 07:43.960
+of things to the code to optimize it.
+
+92
+07:46.090 --> 07:51.840
+One of the common optimizations for a case statement is to convert it to a branch table.
+
+93
+07:53.870 --> 07:59.150
+The compiler will generate some code which creates an array, the indexes of this array will be the
+
+94
+07:59.480 --> 08:03.920
+case labels, and the elements will be pointers to the functions that get called.
+
+95
+08:05.810 --> 08:12.560
+If, for example, the value of x is zero, then the program will go to the element with index zero and
+
+96
+08:12.560 --> 08:15.830
+it will call the function in there, which will cause it to call a().
+
+97
+08:17.940 --> 08:23.580
+And the problem is, if we have an interruption which sets the value of x to 10, the program will go to the
+
+98
+08:23.730 --> 08:28.170
+element within the index 10, which is not actually part of the array, because the highest index is
+
+99
+08:28.170 --> 08:33.180
+nine, and it is going to execute the function there, which could be any arbitrary code.
+
+100
+08:34.890 --> 08:36.390
+So who knows what could happen then!
+
+101
+08:40.910 --> 08:46.590
+Torn writes and reads, These are actually very difficult to demonstrate on current hardware.
+
+102
+08:47.420 --> 08:53.880
+If you're using something like ARM or PowerPC from the 2000s, then there are some cases where this
+
+103
+08:53.930 --> 08:54.360
+could happen.
+
+104
+08:55.580 --> 09:00.380
+These are 32 bit systems, but they have instructions which can take 64 bit arguments.
+
+105
+09:00.710 --> 09:03.800
+So, for example, you can save a 64 bit integer.
+
+106
+09:05.450 --> 09:11.360
+The addresses where the integer gets saved can only store 32 bits, so this is done by splitting
+
+107
+09:11.360 --> 09:17.900
+the number into half. The first half gets written into one memory address and the second half is written into
+
+108
+09:17.900 --> 09:19.390
+the memory address next to it.
+
+109
+09:21.630 --> 09:27.870
+The problem occurs when we have two threads which are writing to that location at the same time, so
+
+110
+09:27.870 --> 09:31.980
+the first thread will write the first half of this number to the first address.
+
+111
+09:32.550 --> 09:38.780
+Then it gets interrupted. Another thread will run and write both halves of its number to the two addresses.
+
+112
+09:39.120 --> 09:42.450
+So it is going to overwrite what is in the first half of the address.
+
+113
+09:43.860 --> 09:45.750
+Then the original thread will start again.
+
+114
+09:46.080 --> 09:50.010
+It'll write the second half of its number into the second half of the address.
+
+115
+09:50.440 --> 09:53.740
+So that'll overwrite what the thread "B" just put there.
+
+116
+09:54.060 --> 09:59.220
+So we're going to end up with a number that has the first half of thread A's number [sic] and the second
+
+117
+09:59.220 --> 10:00.530
+half of thread B's number [sic].
+
+118
+10:01.200 --> 10:07.530
+It's as if you'd written down thread A's number and thread B's number on pieces of paper and then torn
+
+119
+10:07.530 --> 10:09.960
+them in half and swapped them around.
+
+120
+10:09.960 --> 10:15.000
+So we have the first half of A and the second half of B. Sorry, the first half...
+
+121
+10:15.720 --> 10:19.320
+So we have the first half of B and the second half of A.
+
+122
+10:19.890 --> 10:25.140
+And we can also have a torn read, which happens when a thread, which is reading, is interrupted by
+
+123
+10:25.140 --> 10:26.430
+another thread which is writing.
+
+124
+10:26.790 --> 10:31.950
+So the reading thread will get the first half of the number, then the writing thread will overwrite that
+
+125
+10:31.950 --> 10:34.380
+and put a different value in the second half of that number.
+
+126
+10:34.860 --> 10:38.040
+And then the reading thread will pick up that new value from the second half.
+
+127
+10:39.030 --> 10:42.870
+So it will be the number, which again is a mixture of two different values.
+
+128
+10:47.340 --> 10:52.860
+Improper construction. If we imagine a thread which is creating an object and it calls the object's
+
+129
+10:52.860 --> 10:59.370
+constructor. While it is doing that, it is interrupted by another thread, which is also calling a constructor
+
+130
+10:59.550 --> 11:01.070
+on the same memory location.
+
+131
+11:01.500 --> 11:03.420
+And that's going to give us a torn write.
+
+132
+11:04.170 --> 11:10.380
+If we imagine the constructor has several initialization statements and some of those get executed
+
+133
+11:10.620 --> 11:14.390
+by one thread and some of those get executed by another thread, we are going to have a torn
+
+134
+11:14.400 --> 11:14.760
+write.
+
+135
+11:15.090 --> 11:19.140
+And the object is going to be initialized with a mixture of values from each thread.
+
+136
+11:22.350 --> 11:23.610
+Another horrible bit of code!
+
+137
+11:25.460 --> 11:31.790
+We have a situation where we have a class with inheritance and in the base class, the base class will
+
+138
+11:31.790 --> 11:35.660
+push an instance of itself onto a vector of pointers to the base.
+
+139
+11:37.840 --> 11:43.210
+As you probably know, when you have a derived class object, that contains an instance of the base class
+
+140
+11:43.210 --> 11:48.520
+object and that base class object is created before the derived class constructor is called.
+
+141
+11:49.570 --> 11:54.760
+So if we call the derived class constructor, it'll call the base class constructor.
+
+142
+11:55.180 --> 12:01.210
+The base class constructor will push back a pointer to the partially constructed base object.
+
+143
+12:02.510 --> 12:07.050
+And then if some other thread accesses that element of the vector before the derived class constructor
+
+144
+12:07.070 --> 12:10.340
+has run, then it is only going to see a partially constructed object.
+
+145
+12:14.190 --> 12:21.240
+And finally, improper destruction. You probably know about the shared_ptr in C++11, which is a reference
+
+146
+12:21.390 --> 12:21.990
+counted object.
+
+147
+12:23.060 --> 12:29.480
+The idea is that every time a reference to the object is destroyed, a counter is decremented. When
+
+148
+12:29.480 --> 12:30.800
+the counter goes down to zero,
+
+149
+12:30.920 --> 12:36.530
+that means the last reference has been destroyed and then we can delete the object and its management
+
+150
+12:36.530 --> 12:36.900
+data.
+
+151
+12:38.420 --> 12:40.970
+So imagine we try to implement this ourselves.
+
+152
+12:41.300 --> 12:44.110
+Obviously, the real shared_ptr does not suffer from this.
+
+153
+12:44.120 --> 12:46.030
+It has been designed intelligently.
+
+154
+12:46.040 --> 12:51.320
+But if we try to write it ourselves and get it wrong, then something like this could happen.
+
+155
+12:52.130 --> 13:01.470
+We have an integer which is decremented, and then we check if it is equal to zero. In a threaded program,
+
+156
+13:01.550 --> 13:07.330
+we could have two threads which are destroying their reference at the same time.
+
+157
+13:08.210 --> 13:14.300
+And if one threat gets interrupted after doing the decrement, but before doing the check, then we
+
+158
+13:14.300 --> 13:17.090
+can have the situation where the reference count has the wrong value.
+
+159
+13:18.740 --> 13:25.630
+If the reference count is two, then one thread decrements it down to one and then it gets interrupted, then the next thread
+
+160
+13:25.670 --> 13:27.680
+will take it down to zero.
+
+161
+13:28.630 --> 13:34.870
+Then that thread will see the reference count equal to zero and the first thread, when it runs again, will also see that the
+
+162
+13:34.870 --> 13:36.140
+reference count is equal to zero.
+
+163
+13:36.520 --> 13:38.160
+So these deletions are done twice.
+
+164
+13:41.350 --> 13:46.990
+On the other hand, if the reference count is one initially, then the first thread will decrement it to zero,
+
+165
+13:47.270 --> 13:48.280
+then it gets interrupted.
+
+166
+13:48.280 --> 13:53.810
+The second thread decrements it to minus one, then both sides will see a value of minus one.
+
+167
+13:54.070 --> 13:57.910
+So this check fails and the deletion is not done.
+
+168
+13:58.360 --> 13:59.980
+So in fact, we have a memory leak.
+
+169
+14:03.930 --> 14:07.020
+So data races are pretty nasty things, how do you manage them?
+
+170
+14:07.590 --> 14:10.730
+The only real answer is not to allow them to occur in the first place.
+
+171
+14:12.540 --> 14:17.730
+As we have seen, they occur intermittently. It requires some kind of timing coincidence to actually
+
+172
+14:17.730 --> 14:22.090
+trigger bugs, and they're also sensitive to environment as well.
+
+173
+14:22.290 --> 14:24.510
+Sometimes they only occur under heavy load.
+
+174
+14:26.360 --> 14:30.470
+So the best way to deal with data races is to make sure they do not happen in the first place.
+
+175
+14:31.040 --> 14:37.070
+So if we think back to the definition of a data race where we have accesses from different threads,
+
+176
+14:38.150 --> 14:42.150
+we have accesses which are not ordered and we have accesses which are not atomic.
+
+177
+14:42.740 --> 14:45.550
+So to avoid a data race, you do the opposite of those.
+
+178
+14:46.490 --> 14:48.820
+So we make all the accesses in the same thread.
+
+179
+14:49.250 --> 14:53.140
+So do not share data between different threads unless it is absolutely necessary.
+
+180
+14:55.150 --> 14:58.950
+Or we can make the accesses "atomic", which we will look at later on in the course.
+
+181
+15:00.390 --> 15:06.470
+So we use shared data which can be accessed using so-called "atomic" operations, which can't be interrupted.
+
+182
+15:07.910 --> 15:13.520
+Or we can make each access happen before the next, so we impose some kind of ordering on how threads access
+
+183
+15:13.560 --> 15:17.060
+shared data, and we will be looking at that in the next section of this course.
+
+184
+15:18.050 --> 15:20.210
+Until then, keep coding!

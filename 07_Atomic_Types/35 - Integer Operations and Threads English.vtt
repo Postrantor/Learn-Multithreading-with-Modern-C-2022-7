@@ -1,0 +1,375 @@
+WEBVTT
+
+0
+00:00.180 --> 00:00.780
+Hello again!
+
+1
+00:00.990 --> 00:04.740
+In this video, we are going to look at integer operations and threads.
+
+2
+00:06.940 --> 00:13.220
+On modern hardware, integer operations are always performed as a single processor instruction.
+
+3
+00:13.930 --> 00:15.100
+There are some exceptions.
+
+4
+00:15.370 --> 00:21.760
+If the data does not fit into a single word, if it is spread across more than one word, that does not
+
+5
+00:21.760 --> 00:22.160
+apply.
+
+6
+00:22.930 --> 00:24.040
+But otherwise, it does.
+
+7
+00:26.110 --> 00:30.100
+A processor cannot be interrupted while it is performing a instruction.
+
+8
+00:30.730 --> 00:35.870
+So this means that if we have a thread that is performing an integer operation, it cannot be interrupted.
+
+9
+00:36.580 --> 00:38.800
+So this raises an interesting possibility.
+
+10
+00:39.100 --> 00:44.020
+If we're using an integer for shared data, do we still need to lock it?
+
+11
+00:45.100 --> 00:46.190
+Well, let's find out.
+
+12
+00:48.350 --> 00:52.390
+I have got some code here which uses a shared integer variable.
+
+13
+00:53.920 --> 00:59.350
+We have a task function which is going to increment this 100,000 times.
+
+14
+01:01.580 --> 01:07.460
+You will notice there are no mutexes, but this cannot be interrupted, and then we are going to have some
+
+15
+01:07.460 --> 01:10.370
+threads which execute this 10 times.
+
+16
+01:10.710 --> 01:16.740
+So if we do ten lots of 100,000 increments, we should have a final value of one million.
+
+17
+01:18.770 --> 01:24.710
+Obviously, if we are going by the classic C++ definition, we have a data race because we have a single
+
+18
+01:25.130 --> 01:29.040
+memory location which is accessed by multiple threads with modification.
+
+19
+01:29.600 --> 01:30.920
+So let's see if it works.
+
+20
+01:32.630 --> 01:34.530
+No! No, it does not.
+
+21
+01:35.120 --> 01:40.890
+The answer is five hundred and forty six thousand, four hundred and fifty six, which is less than one million.
+
+22
+01:41.360 --> 01:43.440
+So some of the increments are being lost,
+
+23
+01:43.460 --> 01:44.120
+it looks like.
+
+24
+01:47.740 --> 01:49.930
+So we must have gone wrong somewhere.
+
+25
+01:51.100 --> 01:57.130
+The reason is that our assumption is that the plus plus operation cannot be interrupted, which is correct.
+
+26
+01:58.270 --> 02:02.680
+However, if we are incrementing a variable, there is actually three separate operations.
+
+27
+02:04.310 --> 02:06.170
+So that is actually interruptible
+
+28
+02:08.720 --> 02:13.010
+To understand the problem a bit better, we need to learn something about how computers work.
+
+29
+02:13.460 --> 02:15.140
+This is very, very simplified.
+
+30
+02:16.540 --> 02:18.960
+Modern computers are very complicated.
+
+31
+02:19.930 --> 02:23.230
+I am not going to make things any more complicated than they have to be.
+
+32
+02:24.770 --> 02:33.500
+So let's pretend it is 1980, 1985, we have a computer which has a single processor and some RAM.
+
+33
+02:35.300 --> 02:39.640
+And screen, obviously, and maybe a hard disk or floppy disk drive, but that is not important.
+
+34
+02:41.410 --> 02:47.560
+The processor has some memory cells which are called registers, and these are used for storing data,
+
+35
+02:47.560 --> 02:49.270
+which the processor is working on.
+
+36
+02:52.800 --> 02:59.280
+When we execute a C++ program, the instructions are executed by the processor, the variables are stored
+
+37
+02:59.280 --> 03:04.530
+in RAM, and when the processor needs to do some operation on a variable,
+it fetches the value from
+
+38
+03:04.530 --> 03:06.410
+RAM into a register.
+
+39
+03:07.380 --> 03:13.570
+Then it does its operation and then it will save the new value of the variable back to RAM.
+
+40
+03:13.980 --> 03:17.910
+So data is constantly being copied from RAM into registers and back again.
+
+41
+03:22.890 --> 03:27.270
+If we imagine that we are running a threaded program on this very simple computer.
+
+42
+03:29.460 --> 03:35.700
+Every time a thread is interrupted, a task switch occurs. This means that the values of the registers are
+
+43
+03:35.700 --> 03:42.030
+backed up on the processor and the values that the new thread needs for its registers are loaded up.
+
+44
+03:42.840 --> 03:48.810
+And then when that thread gets interrupted, its registers are backed up and another thread's registers
+
+45
+03:48.810 --> 03:49.860
+are loaded up and so on.
+
+46
+03:51.320 --> 03:58.190
+And data is loaded from RAM into processor registers as needed and if necessary, written back to
+
+47
+03:58.190 --> 04:00.140
+RAM after it has been modified.
+
+48
+04:03.550 --> 04:09.490
+So getting back to our program, we got a strange number because there is a data race, but why is there
+
+49
+04:09.490 --> 04:10.120
+a data race?
+
+50
+04:11.750 --> 04:18.920
+And the answer is that incrementing a variable involves three operations. We need to copy the value of the
+
+51
+04:18.920 --> 04:21.340
+variable from RAM into the register.
+
+52
+04:22.860 --> 04:28.620
+Then the processor will increment the value in its register and then the new value of the variable
+
+53
+04:28.830 --> 04:32.370
+has to be written back to the storage in RAM.
+
+54
+04:34.020 --> 04:39.660
+These are being executed as threads, which run concurrently, so they could be interrupted at any time
+
+55
+04:39.960 --> 04:43.110
+and another threat could run and do any one of these steps.
+
+56
+04:44.270 --> 04:52.220
+In particular, if we get interrupted after we do the increment, but before we do the update and then
+
+57
+04:52.220 --> 04:54.950
+another thread runs which will do the update.
+
+58
+04:56.860 --> 05:03.370
+So the second thread will write some value into count, and then when this thread wakes up, it will
+
+59
+05:03.370 --> 05:07.840
+write its own value into count and overwrite the value from the previous thread.
+
+60
+05:09.600 --> 05:14.460
+To see why this could be a problem, let's say we have a thread which runs. It gets the value of count,
+
+61
+05:14.970 --> 05:22.020
+which could be 123. It will copy that into the processor's register, then the increment
+
+62
+05:22.020 --> 05:23.250
+will take it to 124.
+
+63
+05:23.610 --> 05:25.890
+And then at that point, the thread is interrupted.
+
+64
+05:26.280 --> 05:28.020
+The register values are backed up.
+
+65
+05:29.280 --> 05:32.580
+Thread B runs. Its register values are loaded up.
+
+66
+05:33.810 --> 05:38.940
+It copies the value of count, which is still 123, because Threat A has not updated
+
+67
+05:38.940 --> 05:39.350
+it yet.
+
+68
+05:40.430 --> 05:46.190
+Then thread B will increment it to 124, then thread B will save the value 124 in RAM and go to
+
+69
+05:46.190 --> 05:46.610
+sleep.
+
+70
+05:47.670 --> 05:51.760
+Then thread A will wake up. Its register values are going to be restored.
+
+71
+05:52.050 --> 05:59.250
+It has the value 124 in its register, and it is going to write 124 in count.
+
+72
+06:00.720 --> 06:07.410
+So at the start of this, the value of count was 123. It has been incremented twice, but its value
+
+73
+06:07.410 --> 06:09.040
+is finally 124.
+
+74
+06:09.570 --> 06:14.010
+So one of the increments has been lost, due to thread A overwriting thread B's value.
+
+75
+06:15.820 --> 06:22.210
+So we need to ensure somehow that thread A cannot be interrupted until it has written its value and then when
+
+76
+06:22.210 --> 06:24.490
+thread B runs, it will get the new value.
+
+77
+06:27.210 --> 06:31.950
+We have already seen how to do this with a mutex. We just call lock() and unlock(). lock() will prevent
+
+78
+06:31.950 --> 06:37.920
+other things from executing the critical region and unlock() will make the critical region available and
+
+79
+06:37.920 --> 06:41.160
+also release the value of the shared variable.
+
+80
+06:43.650 --> 06:46.920
+We can do this here by declaring count as an "atomic" variable.
+
+81
+06:47.910 --> 06:53.940
+And in this case, the compiler will generate special processor instructions, which will synchronize
+
+82
+06:53.940 --> 06:54.450
+the threads.
+
+83
+06:54.750 --> 06:56.210
+So this is actually different from a mutex.
+
+84
+06:56.220 --> 06:58.920
+A mutex is a library object.
+
+85
+06:59.200 --> 07:06.390
+It will make calls into the operating system for the operating system to manage the locks.
+With an atomic
+
+86
+07:06.390 --> 07:06.890
+variable,
+
+87
+07:07.410 --> 07:12.960
+the compiler will generate special code, which will make the processor perform in a special way, to
+
+88
+07:12.960 --> 07:18.710
+make sure that the threads are synchronized so the thread will not be interrupted until it has written
+
+89
+07:18.720 --> 07:22.500
+the new value and the next thread will get the new value.
+
+90
+07:24.030 --> 07:30.040
+So using an atomic variable will have a similar result to using a mutex in terms of safety.
+
+91
+07:30.480 --> 07:33.690
+So this means we now have two ways of avoiding a data race.
+
+92
+07:35.810 --> 07:40.970
+In the next video, I will show you how to create atomic variables, but until then, keep coding!

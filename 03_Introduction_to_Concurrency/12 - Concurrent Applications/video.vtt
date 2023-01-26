@@ -1,0 +1,281 @@
+WEBVTT
+
+0
+00:00.600 --> 00:01.210
+Hello there.
+
+1
+00:01.590 --> 00:07.800
+In this video, we are going to look at concurrent applications. In general terms, what does it mean
+
+2
+00:07.890 --> 00:09.870
+to make an application concurrent?
+
+3
+00:12.350 --> 00:14.570
+There are two main cases.
+
+4
+00:15.830 --> 00:22.520
+Going back to the client server relationship, we mentioned earlier, there was the server side and
+
+5
+00:22.520 --> 00:26.780
+on the other hand, there is the client side and also standalone applications.
+
+6
+00:29.380 --> 00:36.520
+With server applications, it is usually fairly easy to see how to make it concurrent. Typically
+
+7
+00:36.520 --> 00:43.870
+a server receives lots of requests from different clients, so it is quite natural to create a new thread
+
+8
+00:44.110 --> 00:45.400
+to handle each request.
+
+9
+00:47.260 --> 00:53.590
+Usually there are only a few basic operations, for example, with a database server, you may be asked
+
+10
+00:53.590 --> 00:57.970
+to return some data or create a new table and populate it.
+
+11
+00:58.900 --> 01:04.780
+So it is quite obvious where the concurrent tasks are and how to write them, at least in principle!
+
+12
+01:06.900 --> 01:13.770
+Data which is shared between threads. It is pretty obvious what that is. If you are writing a database
+
+13
+01:13.770 --> 01:20.460
+server than you already have code which supports transactions, and you can use that for protecting
+
+14
+01:20.460 --> 01:21.320
+shared data.
+
+15
+01:25.030 --> 01:30.500
+For client applications or standalone user applications, it is not quite so simple.
+
+16
+01:31.690 --> 01:38.590
+Usually there is only one person using a program instance, so you cannot gain concurrency between users.
+
+17
+01:40.120 --> 01:46.980
+When people that use an application or a client, they tend to follow a sequential workflow. For example,
+
+18
+01:46.990 --> 01:54.010
+you can open a document, make some changes, save your document, print it out, and that is all done
+
+19
+01:54.010 --> 01:54.700
+in sequence.
+
+20
+01:55.090 --> 01:58.060
+There is not really much scope for doing things concurrently.
+
+21
+02:00.000 --> 02:05.370
+The data that the program uses that you might want to share between threats tends to be hidden away
+
+22
+02:05.640 --> 02:08.380
+inside functions or objects in the application.
+
+23
+02:09.030 --> 02:11.690
+It is not really out in the open like it is in servers.
+
+24
+02:12.960 --> 02:16.880
+And also there is not any easy way to manage shared data.
+
+25
+02:21.060 --> 02:26.160
+Concurrency and responsiveness. We have basically looked at this before. When the application does a
+
+26
+02:26.880 --> 02:30.480
+operation that takes a long time, it is blocked and it cannot do anything else.
+
+27
+02:32.880 --> 02:38.640
+If we make the application multithreaded, the user interface will run in its own thread, which is
+
+28
+02:38.640 --> 02:40.230
+always in the foreground.
+
+29
+02:40.560 --> 02:43.740
+So it is always available to respond to user actions.
+
+30
+02:44.730 --> 02:50.610
+And then each of these tasks where the application does its work, such as saving a document, preparing
+
+31
+02:50.610 --> 02:53.730
+a print preview and so on, is run in its own thread.
+
+32
+02:54.270 --> 02:57.060
+And these threads can run in the background, asynchronously.
+
+33
+02:59.600 --> 03:01.430
+They communicate with the main thread.
+
+34
+03:01.460 --> 03:04.430
+They could use message queues, which is a popular technique.
+
+35
+03:06.190 --> 03:12.670
+And also, the communication can cause the user interface thread to change state. For example, if
+
+36
+03:12.670 --> 03:20.080
+you are doing an operation, then some of the menu items might be greyed out, or it might show an hourglass
+
+37
+03:20.080 --> 03:25.350
+or a progress counter, and that can be flexible depending on what is actually happening in the background.
+
+38
+03:30.070 --> 03:35.830
+All threads have access to the memory space and can easily share data, so you could use global or
+
+39
+03:35.830 --> 03:38.250
+static variables in the application for sharing that.
+
+40
+03:39.310 --> 03:43.590
+However, you can have different threads accessing the same data concurrently.
+
+41
+03:43.900 --> 03:51.430
+And if threads try to modify the same variable at the same time, then you can get data corruption. And
+
+42
+03:51.430 --> 03:53.250
+these variables need to be protected,
+
+43
+03:53.260 --> 03:55.600
+so only one threat at a time can access them.
+
+44
+03:57.820 --> 04:05.560
+The traditional approach is to use a lock, so the variable is locked and only one thread is allowed in
+
+45
+04:05.950 --> 04:07.390
+to access it at a time.
+
+46
+04:08.620 --> 04:12.270
+There's also lock-free programming using something called atomic variables.
+
+47
+04:13.240 --> 04:17.760
+And then finally, you can use functional programming techniques where you do not actually share data.
+
+48
+04:19.390 --> 04:24.580
+This course is mainly going to be looking at the traditional programming technique with locks. We will
+
+49
+04:24.580 --> 04:28.390
+mention the others briefly, but the main focus is going to be on locks.
+
+50
+04:30.660 --> 04:34.540
+So here's an example of how a threaded client application could work.
+
+51
+04:35.370 --> 04:40.880
+We have some application like Word, for example, which is going to index a document.
+
+52
+04:41.790 --> 04:45.090
+So it's about to start up a new thread to do the indexing.
+
+53
+04:45.810 --> 04:50.540
+The main thread on the GUI is going to disable most of the user interface functionality.
+
+54
+04:51.360 --> 04:56.490
+So you cannot click on most of the menu items, but you can still move the window around and maybe use
+
+55
+04:56.490 --> 04:57.150
+a few things.
+
+56
+04:59.160 --> 05:04.140
+The GUI thread then displays a dialogue box so the user can cancel the process.
+
+57
+05:05.890 --> 05:08.680
+Then the thread which is doing the index will start.
+
+58
+05:10.700 --> 05:17.360
+It may well be that the data is in some kind of tree structure which allows for vectorized processing,
+
+59
+05:17.360 --> 05:18.660
+which we will explain later on.
+
+60
+05:19.550 --> 05:26.180
+So the indexing thread can use a parallel sorting algorithm to sort the data and work out where all
+
+61
+05:26.180 --> 05:29.090
+the items are and how to organize this index.
+
+62
+05:30.680 --> 05:38.090
+Every now and again, the indexing method will send a message to the GUI thread saying, "I have completed
+
+63
+05:38.090 --> 05:43.910
+(so much) of the process" and the GUI can update its progress bar to show X percent.
+
+64
+05:45.840 --> 05:52.870
+Then finally, the indexing thread sends a message to the GUI thread, saying, "I have finished" and then the
+
+65
+05:53.010 --> 06:00.030
+GUI can re-enable the user interface, so the dialogue box will disappear and the disabled menu items will
+
+66
+06:00.450 --> 06:01.470
+start working again.
+
+67
+06:03.060 --> 06:04.370
+Okay, so that's it for this
+
+68
+06:04.380 --> 06:04.710
+video.
+
+69
+06:04.800 --> 06:05.700
+I'll see you next time.

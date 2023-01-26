@@ -1,0 +1,582 @@
+WEBVTT
+
+0
+00:00.150 --> 00:00.670
+Hello there.
+
+1
+00:00.870 --> 00:05.640
+In this video, we're going to look in more detail at the C++ thread class.
+
+2
+00:09.060 --> 00:14.310
+One thing we can do with threads is to pause them.
+We can say "do not execute any instructions for a
+
+3
+00:14.310 --> 00:16.140
+certain amount of time".
+
+4
+00:16.710 --> 00:18.660
+We can - if you like - tell them to go to sleep.
+
+5
+00:19.500 --> 00:24.240
+To do that, we call a function std colon colon this underscore thread
+
+6
+00:24.240 --> 00:25.830
+Colon colon sleep
+
+7
+00:25.830 --> 00:26.850
+Underscore for
+
+8
+00:28.330 --> 00:35.210
+And to tell the thread how long we want it to go to sleep for, we give it an argument of type
+
+9
+00:35.260 --> 00:36.190
+std colon colon
+
+10
+00:37.030 --> 00:38.630
+chrono, colon colon duration.
+
+11
+00:39.190 --> 00:42.210
+(I think the person who wrote this must have been paid by the keystroke!)
+
+12
+00:43.330 --> 00:47.340
+But anyway, this will specify the amount of time the thread is going to pause for.
+
+13
+00:48.130 --> 00:52.590
+If you're using C++11, the syntax is rather clumsy.
+
+14
+00:53.320 --> 01:00.250
+You have to put chrono colon colon, then the unit of time and then the number of units.
+
+15
+01:00.790 --> 01:02.890
+So that would be 50 milliseconds.
+
+16
+01:04.600 --> 01:13.660
+In C++ 14, they added some literals to the library, some for chrono, some for string and some for
+
+17
+01:13.660 --> 01:21.190
+units. The ones for chrono are in the std::chrono::literals namespace, but
+
+18
+01:21.190 --> 01:24.520
+that's actually inline inside the chrono namespace.
+
+19
+01:25.330 --> 01:28.510
+So you can just put std::literals and you'll pick them up.
+
+20
+01:29.560 --> 01:34.310
+Then you can say sleep for "50ms". If you want microseconds,
+
+21
+01:34.330 --> 01:35.200
+That's "us".
+
+22
+01:36.000 --> 01:37.920
+I think you'll agree that looks a lot better than that.
+
+23
+01:41.010 --> 01:45.900
+One very useful side effect of this is that it works with single threaded programs as well.
+
+24
+01:46.260 --> 01:51.470
+You still have to #include thread, but you do not need any actual threads in the program.
+
+25
+01:51.720 --> 01:53.070
+Apart from the main thread, of course.
+
+26
+01:54.240 --> 01:59.910
+So that solves quite a long running program in C++, where it's quite often that you want your program
+
+27
+01:59.910 --> 02:03.350
+to be able to stop for a second or two before doing something.
+
+28
+02:04.080 --> 02:06.110
+But there was not any standard way to do that.
+
+29
+02:06.120 --> 02:11.400
+You would have to go into Windows or the Linux operating system and do something that was system specific.
+
+30
+02:12.420 --> 02:14.580
+So that made it quite hard to teach people how to do that.
+
+31
+02:14.910 --> 02:16.410
+So now there's a standard way.
+
+32
+02:20.560 --> 02:24.250
+Each individual thread object has an identifier.
+
+33
+02:24.910 --> 02:28.380
+This is of type std::thread::id.
+
+34
+02:29.470 --> 02:32.730
+It is actually a class, but it behaves like a number.
+
+35
+02:33.430 --> 02:36.790
+The values that it has are not actually important to us.
+
+36
+02:36.820 --> 02:38.830
+They are just used internally in the library.
+
+37
+02:40.260 --> 02:46.340
+They are guaranteed to be unique in that, if you have several threads running at the same time, they will
+
+38
+02:46.340 --> 02:47.630
+all have different ID's.
+
+39
+02:48.290 --> 02:50.990
+And if you have two thread objects which have identical...
+
+40
+02:52.340 --> 02:57.520
+And if you have two threads which have the same identifier, then they are the same object.
+
+41
+02:57.530 --> 02:59.500
+In other words, you've got two references.
+
+42
+03:01.190 --> 03:01.700
+However,
+
+43
+03:02.830 --> 03:09.970
+ID's can be reused. If a thread terminates and then a new thread starts up, the new thread could be given
+
+44
+03:10.060 --> 03:12.010
+the ID that the old thread had.
+
+45
+03:13.320 --> 03:18.630
+So they are not completely unique in that sense. If you have an ID, it does not necessarily tell you
+
+46
+03:18.630 --> 03:19.620
+which thread you have.
+
+47
+03:21.480 --> 03:28.050
+Which is a bit unfortunate because they have ordering. So you can use them as keys and that would allow
+
+48
+03:28.050 --> 03:32.710
+you to store objects in associative  containers. So you could have a map or a set of threads.
+
+49
+03:33.300 --> 03:39.690
+Unfortunately, because the ID's can be reused, there is no way to guarantee that the ID that you have
+
+50
+03:39.690 --> 03:44.810
+now corresponds to the thread that you had when you put the ID into the container.
+
+51
+03:46.940 --> 03:53.420
+Which is all a bit pointless, but don't ask me, I didn't design the language! Anyway to get the ID
+
+52
+03:53.420 --> 03:59.450
+of the current thread, we do a std colon colon this underscore thread colon colon get underscore
+
+53
+03:59.810 --> 04:00.350
+id.
+
+54
+04:03.480 --> 04:09.070
+And if you have an object, you can call a member function, get underscore id, and that will return
+
+55
+04:09.120 --> 04:10.550
+the identifier as well.
+
+56
+04:15.110 --> 04:22.360
+So as we said earlier, the threads provided by the C++ Standard Library are really just a wrapper around
+
+57
+04:22.370 --> 04:23.210
+the operating system
+
+58
+04:23.210 --> 04:28.240
+one. It is actually possible to gain access to the underlying operating system.
+
+59
+04:30.590 --> 04:37.640
+Usually the functions which the operating system provides use some kind of "handle", which is data about
+
+60
+04:37.640 --> 04:38.150
+the thread.
+
+61
+04:39.930 --> 04:47.130
+The C++ class has a native underscore handle member function which will allow you to retrieve that
+
+62
+04:47.130 --> 04:52.830
+handle. So you can get the handle and then work directly with the underlying operating system if you
+
+63
+04:52.830 --> 04:53.260
+want to.
+
+64
+04:54.330 --> 04:59.790
+So you get access to the Windows Base API, pthreads, the Linux kernel threads and so on.
+
+65
+05:01.680 --> 05:02.820
+Why would you want to do that?
+
+66
+05:03.180 --> 05:08.520
+Well, there are some extra functions which operating systems provide which haven't been added to the
+
+67
+05:08.520 --> 05:09.630
+C++ thread.
+
+68
+05:10.560 --> 05:13.190
+So, for example, you can change the priority of a thread.
+
+69
+05:13.470 --> 05:18.810
+You can say that you want one thread to have a higher priority than the others, or some threads to have lower
+
+70
+05:18.810 --> 05:20.690
+priority, depending on how important they are.
+
+71
+05:21.750 --> 05:23.850
+And there is also something called threat affinity.
+
+72
+05:24.210 --> 05:27.960
+You can say, I want this thread to run on a particular core.
+
+73
+05:29.670 --> 05:35.540
+That's very important in high-performance computing with low latency. If you have a thread which is
+
+74
+05:35.540 --> 05:41.540
+being switched from one core to another or being task switched out of context, then loaded up again.
+
+75
+05:41.840 --> 05:46.940
+That's a big overhead that can really kill the performance. In a situation where performance is absolutely
+
+76
+05:46.940 --> 05:47.530
+critical,
+
+77
+05:47.570 --> 05:48.980
+that's just too much overhead.
+
+78
+05:49.820 --> 05:54.020
+So you can use this to pin a particular threat onto a core.
+
+79
+05:55.060 --> 06:00.560
+For example, I think there are some stockbrokers who have systems where each core on a computer represents
+
+80
+06:00.560 --> 06:02.290
+a different stock symbol.
+
+81
+06:03.350 --> 06:07.200
+So they have one dedicated processor core for each stock symbol.
+
+82
+06:08.150 --> 06:09.470
+That's the kind of thing you can do.
+
+83
+06:14.750 --> 06:20.720
+We discussed this before. The thread class has ownership of the underlying thread in the same way
+
+84
+06:20.720 --> 06:26.780
+that unique_ptr has ownership of the underlying data that it is pointing to. We can only have one thread
+
+85
+06:26.840 --> 06:29.340
+object for an execution thread at a time.
+
+86
+06:30.410 --> 06:35.660
+And as with unique pointers, we cannot copy the thread objects because you cannot have two threads trying
+
+87
+06:35.660 --> 06:37.810
+to manage the same system thread.
+
+88
+06:38.960 --> 06:41.400
+But it is possible to move a thread object.
+
+89
+06:41.810 --> 06:50.510
+This means that the thread object which is moved from, surrenders ownership of the system thread and
+
+90
+06:50.510 --> 06:55.190
+the object that it is moved into acquires ownership of the system thread.
+
+91
+06:56.060 --> 07:01.580
+So in effect, we have transferred the system thread from one owning object to another.
+
+92
+07:04.540 --> 07:10.720
+And we can use this for passing thread objects into functions. So we can have some function, which
+
+93
+07:10.720 --> 07:12.700
+takes a thread as argument.
+
+94
+07:14.530 --> 07:17.230
+So you can call this with a temporary object.
+
+95
+07:18.040 --> 07:22.240
+This has to be an rvalue reference, obviously, otherwise it can't get moved.
+
+96
+07:23.260 --> 07:27.190
+If we give it an lvalue, then this will try to call the copy constructor, which is deleted, and
+
+97
+07:27.190 --> 07:33.250
+you'll get a compiler error. So we could use a temporary object as the argument, or else we could get
+
+98
+07:33.250 --> 07:37.390
+an lvalue object and then use move on it.
+
+99
+07:38.050 --> 07:38.920
+std::move()
+
+100
+07:40.880 --> 07:47.420
+So when we do that, the thread object here, initially this owns a system thread, which is going
+
+101
+07:47.420 --> 07:56.630
+to start running this func function when it starts up. When we move this thread object into the function
+
+102
+07:56.630 --> 08:02.590
+argument, the local variable in the function then takes ownership of that system thread.
+
+103
+08:03.230 --> 08:08.360
+And then when the system thread starts, is going to run, it will be under the control of this variable in this
+
+104
+08:08.360 --> 08:08.870
+function.
+
+105
+08:10.820 --> 08:15.920
+The object here has had the system thread moved out from it, and it no longer has ownership
+
+106
+08:15.920 --> 08:16.240
+of it.
+
+107
+08:17.810 --> 08:24.030
+In particular, when we get to call join(), we need to call join() as otherwise the - well, you know
+
+108
+08:24.070 --> 08:27.950
+the problem - the main will terminate before the thread finishes.
+
+109
+08:29.740 --> 08:34.900
+join() needs to be called by the owner of the thread, and that's going to be the local variable in this
+
+110
+08:35.440 --> 08:36.150
+function here.
+
+111
+08:37.400 --> 08:43.270
+We cannot call join() on this object because it does not own the underlying thread anymore.
+
+112
+08:46.150 --> 08:52.480
+And we can also return thread objects from functions, so we have a function which returns a thread.
+
+113
+08:54.130 --> 09:02.730
+And again, we can either return a temporary object or else we can return a local variable. We do not
+
+114
+09:02.740 --> 09:08.110
+put this inside a call to std::move() because the compiler will do that automatically if it is possible.
+
+115
+09:09.940 --> 09:10.780
+So, again, this
+
+116
+09:11.790 --> 09:17.220
+underlying threat is initially owned by code in this function, then it gets moved into the return
+
+117
+09:17.220 --> 09:24.270
+value and then whoever calls this will then own the underlying threat and they'll have the responsibility
+
+118
+09:24.270 --> 09:24.960
+for joining it.
+
+119
+09:27.940 --> 09:32.380
+And finally, exceptions. How do exceptions work when you have all these different threads?
+
+120
+09:33.820 --> 09:37.500
+Each of the underlying threads has its own personal call stack.
+
+121
+09:37.870 --> 09:41.070
+So all the data inside the thread is private.
+
+122
+09:41.080 --> 09:44.050
+It is only the shared data which is accessible between threads.
+
+123
+09:46.780 --> 09:53.440
+When an exception is thrown in a single threaded program, the stack is unwound, so the destructors
+
+124
+09:53.440 --> 09:59.970
+for all the objects in the current scope are called. The program will look for a suitable handler.
+
+125
+09:59.980 --> 10:05.350
+If it cannot find one, it will jump up to the caller, it will do the same there. And it will keep on going until
+
+126
+10:05.350 --> 10:06.720
+it finds a suitable handler.
+
+127
+10:07.540 --> 10:12.850
+If it doesn't find one, it will call std::terminate() and by default, that will finish the program.
+
+128
+10:15.080 --> 10:20.000
+When an exception is thrown inside a thread, we get the same stack unwinding process.
+
+129
+10:21.420 --> 10:23.410
+The difference is it does not go all the way to main().
+
+130
+10:23.430 --> 10:26.100
+It goes all the way to the start of the thread's stack.
+
+131
+10:26.760 --> 10:32.250
+So the destructors in the local scope are called. It will look for a handler, it will move up.
+
+132
+10:33.160 --> 10:36.390
+If that is the top of the thread's stack, it will call terminate.
+
+133
+10:36.720 --> 10:42.090
+Even if you have a suitable handler in the main thread, that will not get called because it is not in the
+
+134
+10:42.090 --> 10:43.400
+exception's call stack.
+
+135
+10:45.580 --> 10:48.580
+So each underlying thread has its own stack.
+
+136
+10:49.750 --> 10:53.980
+The exception is... If you like, it cannot propagate out of that stack.
+
+137
+10:53.980 --> 10:55.140
+It has to be handled inside.
+
+138
+10:55.150 --> 10:55.390
+that.
+
+139
+10:57.560 --> 11:03.230
+The only way to handle an exception is to catch it inside the thread where it occurs, and that is completely
+
+140
+11:03.230 --> 11:03.630
+normal.
+
+141
+11:03.890 --> 11:06.710
+Exactly the same as anywhere else. You have a try and catch
+
+142
+11:06.740 --> 11:10.130
+block. You can rethrow, if you like. All the usual stuff.
+
+143
+11:12.430 --> 11:14.560
+OK, so that's it for this video.
+
+144
+11:14.830 --> 11:15.640
+I'll see you next time.

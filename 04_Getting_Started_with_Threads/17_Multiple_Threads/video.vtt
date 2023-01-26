@@ -1,0 +1,573 @@
+WEBVTT
+
+0
+00:00.180 --> 00:00.720
+Hello again.
+
+1
+00:00.900 --> 00:05.490
+In this video, we are going to start looking at how to work with multiple threads.
+
+2
+00:06.420 --> 00:11.640
+I've got some code here which is going to start up a thread which prints out a message.
+
+3
+00:13.900 --> 00:15.610
+There we are, "hello from thread"
+
+4
+00:17.820 --> 00:23.340
+If I want to launch some more threads, then I just create some more instances.
+
+5
+00:27.750 --> 00:29.790
+And of course, to join on them,
+
+6
+00:33.720 --> 00:40.170
+I am going to add an argument to each thread so I can see which thread is printing out the message.
+
+7
+00:48.160 --> 00:53.890
+So there we are, launching multiple threads is pretty straightforward, but understanding how they
+
+8
+00:53.890 --> 00:59.110
+interact with each other when they run can be more involved. For the moment.
+
+9
+00:59.140 --> 01:02.380
+I am going to "dodge" these problems.
+
+10
+01:02.810 --> 01:10.090
+I am going to add a sleep to each thread, so the threads are going to sleep for different intervals of
+
+11
+01:10.090 --> 01:10.630
+times.
+
+12
+01:11.320 --> 01:16.030
+So that one thread does not wake up until the previous thread has finished.
+
+13
+01:16.870 --> 01:21.580
+So thread one is going to run first then exit, then thread two will wake up and run.
+
+14
+01:21.880 --> 01:30.070
+Then thread three will wake up and run. I am going to use the sleep_for function for this_thread.
+
+15
+01:33.770 --> 01:40.490
+And then an interval of one second. I have got to write this out in full, because the suffix only works
+
+16
+01:40.490 --> 01:43.400
+with literals and "num" is a variable.
+
+17
+01:45.740 --> 01:47.390
+So let's see if that works.
+
+18
+01:50.820 --> 01:53.700
+Yes! thread 1, thread 2, thread 3.
+
+19
+01:56.310 --> 02:02.630
+So these threads are all launched, then the first thread will sleep for one second print its message and
+
+20
+02:02.640 --> 02:09.090
+exit. Then the second thread will sleep for two seconds - or one more second rather  - then that will wake
+
+21
+02:09.090 --> 02:10.170
+up and print its message.
+
+22
+02:10.530 --> 02:14.880
+Then the third thread will sleep for another second and then that'll wake up
+
+23
+02:14.880 --> 02:15.780
+and print its message.
+
+24
+02:19.550 --> 02:25.940
+OK, so what is the source of these complications with multiple threads? The kernel has a scheduler
+
+25
+02:26.180 --> 02:34.560
+which controls when and how threads execute, just as it has one for how processes execute. The scheduler
+
+26
+02:34.610 --> 02:40.430
+will allocate threads between cores so each thread will run on a core.
+
+27
+02:42.480 --> 02:48.090
+The scheduler will also perform task switching between threads. And if there are more threads than there
+
+28
+02:48.090 --> 02:50.870
+are cores available, then that is inevitable.
+
+29
+02:54.010 --> 02:59.620
+The scheduler is allowed to interrupt a thread and allow another thread to run on that core.
+
+30
+03:00.520 --> 03:05.190
+So basically this means we cannot make any assumptions about when threads run.
+
+31
+03:05.910 --> 03:08.080
+You cannot even assume what order they start in.
+
+32
+03:10.280 --> 03:16.520
+In the example, I put in some sleeps to make the threads appear to run in the same order as they were
+
+33
+03:16.520 --> 03:21.020
+in the source code, but it is quite possible that these threads could actually start up in a completely different
+
+34
+03:21.020 --> 03:21.350
+order.
+
+35
+03:22.910 --> 03:28.250
+A thread can be interrupted at any time and a thread can be restarted at any time.
+
+36
+03:29.320 --> 03:36.010
+So I chose a very long time out - one second - to make sure that the task switching would not have any effect,
+
+37
+03:37.030 --> 03:41.110
+Of course, in the real world, you would not want to have things waiting for one second.
+
+38
+03:43.440 --> 03:49.770
+So a thread can be interrupted and restarted at any time, and while a thread is inactive due to waiting,
+
+39
+03:49.770 --> 03:53.730
+sleeping or being interrupted, another thread can run.
+
+40
+03:54.570 --> 03:58.290
+This could execute the same code instructions as the inactive thread.
+
+41
+03:59.880 --> 04:03.690
+It could also access data which is shared with the inactive thread.
+
+42
+04:07.250 --> 04:12.700
+So it could look something like this, in a very crude diagram. If we take all the sleeps out of our program,
+
+43
+04:13.190 --> 04:19.460
+we might have that t2 starts first, because the threats can start in any order, then it runs some of its code,
+
+44
+04:19.510 --> 04:21.680
+then it will be interrupted.
+
+45
+04:22.220 --> 04:27.170
+Then t1 starts and runs some of its code while t2 is inactive.
+
+46
+04:28.460 --> 04:32.450
+Then t3 starts up and t1 and t2 are inactive.
+
+47
+04:33.230 --> 04:40.340
+Then t3 gets interrupted, t1 gets to run some more of its code and then t2 can get to run.
+
+48
+04:41.960 --> 04:49.820
+So you can see you have this effect where t2 is executing, but t1 and t3 appear to be executing while
+
+49
+04:49.820 --> 04:56.140
+it's running and similarly, t1 is running, but t3 appears to be executing in the middle of its execution.
+
+50
+04:56.540 --> 05:02.150
+So threads can execute in between each other or, to use the technical term, interleave.
+
+51
+05:06.700 --> 05:13.750
+So I mentioned that threads can share data and this is quite a common technique for threads to communicate
+
+52
+05:13.750 --> 05:15.290
+or exchange data with each other.
+
+53
+05:17.890 --> 05:23.890
+The only requirement is that the data must be visible in all the thread functions that need to share it
+
+54
+05:23.890 --> 05:31.030
+And that is obvious really, because each execution thread has its own execution stack.
+
+55
+05:31.930 --> 05:36.490
+And if there is data which is private to that function, then it is going to be on the function's private
+
+56
+05:36.490 --> 05:40.480
+stack and it will not be visible by any other thread, including the main thread.
+
+57
+05:42.350 --> 05:50.900
+If we are using global functions as our thread functions, then the shared data needs to be global or
+
+58
+05:50.900 --> 05:52.010
+static variables.
+
+59
+05:53.770 --> 06:01.210
+If we have class member functions which are executed as threads, then any member of that class will
+
+60
+06:01.210 --> 06:03.730
+be shared between the member function threads.
+
+61
+06:06.670 --> 06:13.750
+The problem comes when we have this interleaved execution, interacting with shared data. So we can have
+
+62
+06:13.750 --> 06:17.660
+situations where a thread writes some values to shared data.
+
+63
+06:18.310 --> 06:19.450
+Then it gets interrupted.
+
+64
+06:19.840 --> 06:24.450
+Then another thread overwrites the values in that data.
+
+65
+06:24.910 --> 06:31.330
+And then when the first thread wakes up, the value of that data will have changed without the thread
+
+66
+06:31.330 --> 06:32.060
+knowing about it.
+
+67
+06:33.880 --> 06:39.160
+You can even get situations where data contains a mixture of values from two different threads.
+
+68
+06:40.840 --> 06:43.480
+So the interleaved execution was also an interleaved write.
+
+69
+06:45.560 --> 06:52.190
+And trying to keep your [shared] data in a coherent state is one of the biggest problems, maybe the biggest
+
+70
+06:52.190 --> 06:53.300
+problem in concurrency.
+
+71
+06:57.910 --> 07:05.770
+A term that you often hear in talks about multi-threading is the data race. C++ defines very precisely
+
+72
+07:05.770 --> 07:07.480
+what is meant by a data race.
+
+73
+07:08.080 --> 07:13.420
+It can occur when we have the kind of conflicting access that we are talking about. If we have two or
+
+74
+07:13.450 --> 07:16.840
+more threads accessing the same memory location.
+
+75
+07:17.290 --> 07:20.740
+And at least one of the threads is modifying the memory location.
+
+76
+07:23.540 --> 07:28.310
+These accesses are safe, provided there is some kind of synchronization of accesses.
+
+77
+07:30.480 --> 07:35.760
+I did this in a very crude way in the example, by putting sleeps to make sure that each thread
+
+78
+07:36.090 --> 07:38.190
+accesses the output in turn.
+
+79
+07:39.840 --> 07:43.650
+So one solution is to make each access "happen before" the next.
+
+80
+07:45.870 --> 07:51.300
+The other solution is to make the access atomic, which means it is a single operation which cannot be
+
+81
+07:51.300 --> 07:56.280
+interrupted. If neither of these conditions are met, a data race occurs.
+
+82
+07:58.710 --> 08:03.600
+If neither of these conditions are met, then a data race occurs. [This cannot be repeated enough!!]
+
+83
+08:04.260 --> 08:09.900
+The program has undefined behaviour and it is not guaranteed to behave consistently.
+
+84
+08:14.270 --> 08:17.540
+C++ also defines what it means by a memory location.
+
+85
+08:17.840 --> 08:26.480
+This is a scalar object, or a scalar part of an object. A scalar object is a simple object as opposed
+
+86
+08:26.480 --> 08:30.440
+to a compound object such as an array or a struct.
+
+87
+08:31.880 --> 08:40.160
+So this could be a variable of built in type, a pointer, or an element in a container, or a struct or
+
+88
+08:40.160 --> 08:43.520
+class member, which is a scalar object.
+
+89
+08:45.640 --> 08:52.570
+Of course, being C++, there are some obscure edge cases. There are things called bitfields which are designed
+
+90
+08:52.570 --> 08:57.160
+for use with hardware where the value of individual bits is significant.
+
+91
+08:59.760 --> 09:06.140
+Bit fields allow you to create variables which represent groups of bits within an integer so we can
+
+92
+09:06.140 --> 09:11.810
+do something like this, which is bfb is the first nine bits of an int, and bfe is the last
+
+93
+09:11.810 --> 09:12.710
+23 bits.
+
+94
+09:13.710 --> 09:20.640
+The compiler is allowed to optimize for space by putting these into a single int, so that counts as
+
+95
+09:20.640 --> 09:22.290
+a single memory location.
+
+96
+09:23.460 --> 09:29.940
+And then even more obscure - don't ask me why! - you can create a bitfield of zero length.
+
+97
+09:30.630 --> 09:34.290
+So we have bfb as the first nine bits, then we have this
+
+98
+09:34.560 --> 09:37.300
+bfs variable, which corresponds to no bits at all.
+
+99
+09:38.160 --> 09:39.630
+Then we have our bfe variable.
+
+100
+09:41.580 --> 09:46.860
+If you have this zero length bitfield, then the compiler cannot do the optimization, and that actually
+
+101
+09:46.860 --> 09:51.290
+is two separate memory locations. I am sure you are going to be using that all the time!
+
+102
+09:54.000 --> 10:01.440
+When it comes to compound objects, C++ does not place any restrictions on classes that we write, or structs.
+
+103
+10:03.180 --> 10:06.570
+So we could create objects which are internally synchronized.
+
+104
+10:07.600 --> 10:12.580
+And threads can just use them without any external synchronization.
+
+105
+10:13.850 --> 10:19.480
+These are going to be less efficient than single threaded versions due to the overhead from synchronization.
+
+106
+10:20.000 --> 10:25.580
+So if we run these in a single-threaded program or in a situation where there is not a data race, then we are creating
+
+107
+10:25.590 --> 10:26.660
+unnecessary overhead.
+
+108
+10:27.530 --> 10:32.990
+There's also the danger that programmers might see this shared object, which does not appear to be synchronized.
+
+109
+10:33.500 --> 10:36.200
+So they add some synchronization just to make sure.
+
+110
+10:36.950 --> 10:41.070
+And that is not just inefficient, it can actually cause more serious problems.
+
+111
+10:44.630 --> 10:51.060
+When it comes to the standard containers from the C++ library, these are classed as memory locations.
+
+112
+10:51.740 --> 10:58.760
+So if there are multiple threads accessing the same container object and one or more is modifying,
+
+113
+10:59.270 --> 11:05.780
+then there is a potential data race and the user - that's me and you - must add synchronization.
+
+114
+11:07.940 --> 11:14.540
+However, if the accesses are to different objects of the same type, or objects of different types, then there is
+
+115
+11:14.540 --> 11:16.330
+no need for synchronization.
+
+116
+11:17.660 --> 11:22.490
+The result of this is that library containers are just as efficient in multithreaded programs as they are
+
+117
+11:22.490 --> 11:23.690
+in single-threaded programs.
+
+118
+11:24.110 --> 11:29.330
+The only exception is if there is a data race, in which case you need to add synchronization.
+
+119
+11:30.560 --> 11:38.840
+This also means that the C++ standard and C++ compiler developers do not need to provide two different
+
+120
+11:38.840 --> 11:41.930
+versions of the library - one for multithreaded, one for single threaded.
+
+121
+11:43.460 --> 11:48.800
+The advice I would give is to make our own types behave like standard library classes, which is the advice
+
+122
+11:48.800 --> 11:49.610
+I always give.
+
+123
+11:50.120 --> 11:54.510
+If you have different sets of rules, depending on who wrote the code, it makes life much more difficult.
+
+124
+11:56.780 --> 12:02.840
+If we have classes that behave exactly like the built-in types or standard library classes that we can just carry
+
+125
+12:02.840 --> 12:05.450
+on using the same assumptions that we do everywhere else.
+
+126
+12:09.210 --> 12:15.540
+Another term that you will often hear when talking about multi-threading is "race condition". This usually means
+
+127
+12:15.540 --> 12:23.820
+that there are two or more threads trying to do something and the outcome will differ depending on which
+
+128
+12:23.850 --> 12:24.900
+thread gets there first.
+
+129
+12:25.560 --> 12:30.210
+So the outcome of the program execution will depend on how the threads are scheduled to run.
+
+130
+12:31.080 --> 12:34.740
+If we go back to our example and take the sleeps out,
+
+131
+12:35.100 --> 12:40.110
+it is possible that threat two to could get to print its ID before thread one does.
+
+132
+12:40.800 --> 12:44.940
+And then we could run the program again and the scheduling might be different and we might see that
+
+133
+12:44.940 --> 12:46.920
+thread one prints its message first.
+
+134
+12:47.760 --> 12:53.310
+So depending on which thread gets to run first and complete, we get a different message printed.
+
+135
+12:54.480 --> 12:57.030
+Obviously, this is just a little demonstration.
+
+136
+12:57.070 --> 13:03.750
+I mean, it does not matter. But in a real world program race conditions are horrible, a real nightmare.
+
+137
+13:07.370 --> 13:13.940
+In fact, the data race - or at least the data race defined by C++ - is a special case of a more general race
+
+138
+13:13.940 --> 13:14.490
+condition.
+
+139
+13:15.740 --> 13:22.000
+So depending on how the threads are scheduled, you may or may not get interfering writes and data
+
+140
+13:22.010 --> 13:22.570
+corruption.
+
+141
+13:24.610 --> 13:31.060
+OK, so that's it for this video and in the next video, I will give you some examples of these problems.
+
+142
+13:31.720 --> 13:33.430
+Until then, keep coding!

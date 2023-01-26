@@ -1,0 +1,245 @@
+WEBVTT
+
+0
+00:00.150 --> 00:00.670
+Hello again!
+
+1
+00:00.900 --> 00:06.990
+In this video, we are going to talk about atomic types. We discussed in the last video that if we
+
+2
+00:06.990 --> 00:14.280
+make a variable atomic, that will have the same effect as using mutex locks around accesses to that variable.
+
+3
+00:15.150 --> 00:16.700
+So let's find out how to do that.
+
+4
+00:18.880 --> 00:23.290
+C++ 11 has an <atomic> header which defines a template called atomic.
+
+5
+00:24.190 --> 00:27.630
+The parameter for this template must be trivially copyable.
+
+6
+00:28.150 --> 00:35.560
+So that could be a built-in type or a class for which the copy and move constructors do nothing or have been
+
+7
+00:35.650 --> 00:36.260
+deleted.
+
+8
+00:37.750 --> 00:45.010
+Usually only bool, integer types and pointers are made atomic.
+You can use more complex types,
+
+9
+00:45.010 --> 00:51.070
+but there is a risk that locks will be added, which rather defeats the point of trying to avoid locks.
+
+10
+00:52.720 --> 00:56.230
+If that is the case, then you can use a pointer which will not be locked.
+
+11
+00:57.660 --> 01:05.430
+By the way, if you are using C++17, then you can use the standard library shared_ptr as the template
+
+12
+01:05.430 --> 01:07.380
+type without it being locked.
+
+13
+01:11.080 --> 01:16.930
+To create an atomic variable, we put the type of the variable as the parameter.
+
+14
+01:17.320 --> 01:24.090
+So here we've got x, which is an atomic int.
+Atomic objects must be initialized.
+
+15
+01:24.340 --> 01:26.750
+So we set this equal to zero.
+
+16
+01:29.380 --> 01:32.020
+We can assign to this.
+x equals two
+
+17
+01:32.020 --> 01:38.200
+will atomically assign two to x.
+And we can assign from it y equals x
+
+18
+01:38.200 --> 01:44.740
+will atomically assign y to have the value of x.
+And note that y does not need to be atomic.
+
+19
+01:44.980 --> 01:46.420
+It could just be a normal int.
+
+20
+01:48.820 --> 01:55.660
+Each of these operations is atomic in itself, but the two together are not.
+It is quite possible that
+
+21
+01:55.690 --> 02:00.100
+another thread could run between these two statements and modify the value of x.
+
+22
+02:03.590 --> 02:10.040
+So let's modify the program that we had before to use an atomic variable.
+We need to include the <atomic>
+
+23
+02:10.040 --> 02:10.400
+header...
+
+24
+02:16.910 --> 02:21.230
+And then we need to make counter an atomic int...
+
+25
+02:24.700 --> 02:28.120
+It is already initialized to zero, so we don't need to do that.
+
+26
+02:29.290 --> 02:30.610
+Now, let's see if that works...
+
+27
+02:35.110 --> 02:36.670
+Yes, there we are. The correct answer!
+
+28
+02:36.700 --> 02:37.300
+One million.
+
+29
+02:42.950 --> 02:50.960
+I want to talk about the "volatile" keyword, because this sometimes causes confusion.
+In Java and C#,
+
+30
+02:51.440 --> 02:53.960
+it has a special meaning in threaded programs.
+
+31
+02:54.650 --> 02:57.760
+As I understand this, it does not provide locking.
+
+32
+02:57.770 --> 03:00.500
+So you still need to use a synchronized method.
+
+33
+03:01.280 --> 03:06.560
+If the variable is volatile within that method, then any modifications will immediately be visible
+
+34
+03:06.770 --> 03:07.850
+in every other thread.
+
+35
+03:10.250 --> 03:16.640
+So that's the second half of atomic, releasing the value, but not the first half, which makes the accesses
+
+36
+03:16.790 --> 03:17.690
+uninterruptible.
+
+37
+03:19.880 --> 03:25.040
+In C++, that is not the case.
+It has exactly the same meaning as it does in single threaded code,
+
+38
+03:25.400 --> 03:31.550
+which is that the value of the variable may change,
+even if there is not any code which explicitly modifies
+
+39
+03:31.550 --> 03:31.760
+it.
+
+40
+03:33.020 --> 03:37.910
+The main use for this is when you are working with hardware.
+You will have some device which appears as
+
+41
+03:37.910 --> 03:38.870
+a memory address.
+
+42
+03:39.170 --> 03:44.270
+And then when you read from that address, you will get data from the device.
+
+43
+03:45.080 --> 03:48.960
+So you could, for example, read five times from the same address,
+
+44
+03:49.050 --> 03:50.660
+to get five lots of data.
+
+45
+03:52.130 --> 03:58.460
+The reason for making it volatile is that the compiler will see this when it is optimizing and think
+
+46
+03:58.460 --> 04:02.650
+that it can remove the surplus statements and just have one read.
+
+47
+04:03.900 --> 04:08.790
+The volatile keyword will tell it not to perform this optimization,
+so it will actually generate code
+
+48
+04:08.790 --> 04:10.170
+for five separate reads.
+
+49
+04:12.110 --> 04:18.860
+Before the threading support was added to C++11 in the standard some programmers used volatile for when
+
+50
+04:18.860 --> 04:21.500
+we now use atomic, which was a mistake.
+
+51
+04:23.290 --> 04:31.210
+And just to confuse things even further - I think it was 2005 - Visual C++ had a non-standard volatile keyword,
+
+52
+04:31.660 --> 04:36.850
+which had the Java/C# behaviour, but they took that out once the new standard came in.
+
+53
+04:39.450 --> 04:42.530
+So just to prove that volatile will not solve the problem...
+
+54
+04:53.290 --> 04:59.080
+So there we are. 335,000. So we still have the problem with increments being lost.
+
+55
+05:04.390 --> 05:11.280
+So in C++, making this counter volatile has no effect on the behaviour of the multithreaded program.
+
+56
+05:14.010 --> 05:15.570
+Okay, so that's it for this video.
+
+57
+05:15.630 --> 05:18.450
+I'll see you next time, but meanwhile, keep coding!

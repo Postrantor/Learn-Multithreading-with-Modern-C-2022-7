@@ -1,0 +1,560 @@
+WEBVTT
+
+0
+00:00.210 --> 00:00.790
+Hello again.
+
+1
+00:00.960 --> 00:05.130
+In this video, we are going to start looking at things called "mutexes".
+
+2
+00:07.080 --> 00:14.370
+We saw in the last section that data races can occur when multiple threads try to access the same memory
+
+3
+00:14.370 --> 00:21.330
+location. And if we impose some sort of ordering on the threads as they access this location, then
+
+4
+00:21.330 --> 00:22.980
+we can avoid a data race.
+
+5
+00:23.670 --> 00:26.160
+And a mutex is one of the tools for doing that.
+
+6
+00:29.950 --> 00:35.550
+I am afraid this is rather a tasteless analogy, so I apologize to anyone who is offended by it.
+
+7
+00:36.850 --> 00:42.010
+So let us step away from computers for a moment and go to more domestic matters.
+
+8
+00:43.860 --> 00:49.290
+We have a situation where we want to impose a rule that only one person can access the bathroom
+
+9
+00:49.290 --> 00:49.880
+at a time.
+
+10
+00:51.630 --> 00:58.200
+So a common solution is to put a lock on the door and everyone who uses the bathroom has to agree on
+
+11
+00:58.200 --> 00:59.010
+a protocol.
+
+12
+00:59.980 --> 01:06.220
+If the door is unlocked, then you can lock it, access the bathroom, and then you unlock it so the
+
+13
+01:06.220 --> 01:12.730
+next person can access the bathroom. If the door is locked, then you have to wait until it becomes
+
+14
+01:12.730 --> 01:13.230
+unlocked.
+
+15
+01:17.570 --> 01:21.720
+In computer science, the bathroom would be regarded as a "critical section".
+
+16
+01:22.160 --> 01:27.620
+This means some part of the program that must be able to execute without other parts of the program
+
+17
+01:27.620 --> 01:28.580
+interfering with it.
+
+18
+01:31.080 --> 01:36.270
+The bathroom door lock would be called a mutual exclusion object or "mutex" for short.
+
+19
+01:37.820 --> 01:44.780
+And we have this protocol in which two or more users of a resource agree that they will use the mutex to
+
+20
+01:44.780 --> 01:49.700
+control access to it. So provided everybody plays by the rules,
+
+21
+01:50.060 --> 01:55.820
+the mutex will prevent more than one user accessing the resource and executing the critical section
+
+22
+01:56.090 --> 01:57.070
+at any one time.
+
+23
+01:59.900 --> 02:06.350
+The mutex is a data structure. It is a very simple object that just has two states: it is either locked
+
+24
+02:06.350 --> 02:07.130
+or unlocked.
+
+25
+02:11.750 --> 02:17.600
+The way this works in threaded programs where we have multiple threads trying to access a resource is that
+
+26
+02:17.600 --> 02:24.830
+we associate a mutex with the resource and a thread can only access the resource if the mutex is unlocked.
+
+27
+02:26.870 --> 02:30.500
+So you can imagine we have several threads which want to access the resource.
+
+28
+02:30.860 --> 02:32.540
+They try to get a lock on the mutex.
+
+29
+02:33.050 --> 02:34.430
+Only one of them can succeed.
+
+30
+02:34.440 --> 02:40.960
+So the first one there, thread A, will look the mutex and the other threads will have to wait until the mutex
+
+31
+02:41.030 --> 02:42.130
+is unlocked by thread A.
+
+32
+02:43.460 --> 02:49.850
+Meanwhile, thread A has exclusive access to the resource and it can execute its critical region without
+
+33
+02:49.940 --> 02:50.830
+being interrupted [by another thread executing the same code]
+
+34
+02:52.240 --> 02:58.600
+Then when thread A finishes executing its critical region, it will unlock the mutex. Then one of the other
+
+35
+02:58.600 --> 03:02.230
+threads will be able to lock the mutex and access the resource.
+
+36
+03:04.950 --> 03:12.690
+So this means that, by the time any of threads B, C, D, etcetera, gets to access the resource, thread A will have
+
+37
+03:12.690 --> 03:14.000
+completed its access.
+
+38
+03:14.400 --> 03:18.850
+So the access by thread A will "happen before" any access by the other threads.
+
+39
+03:20.550 --> 03:26.010
+So we have been able to impose some ordering on the threads, how they access the resource.
+
+40
+03:26.250 --> 03:28.530
+And that means we have avoided a data race.
+
+41
+03:30.950 --> 03:37.560
+One other aspect of mutexes, which is more significant than it may sound: if a thread modifies the
+
+42
+03:37.560 --> 03:43.190
+resource, then all the threads that run after it will see the result of that modification.
+
+43
+03:43.490 --> 03:50.270
+So, for example, if thread A changes the value of a variable and then thread B runs, thread, B will
+
+44
+03:50.270 --> 03:53.180
+see the variable that was set by thread A.
+
+45
+03:57.480 --> 04:04.500
+When C++ added multi-threading, it provided a mutex class.
+This is in the <mutex> standard header.
+
+46
+04:06.790 --> 04:12.910
+When we create a mutex object, it must be outside any of  the thread [functions] that are going to use it, but
+
+47
+04:12.910 --> 04:14.740
+it must be visible to all those thread [functions].
+
+48
+04:16.270 --> 04:21.850
+This usually means that if we have thread functions which are global functions, then the mutex has
+
+49
+04:21.850 --> 04:24.310
+to be a global or a static variable.
+
+50
+04:26.340 --> 04:33.210
+If the thread functions are member functions of a class, then the mutex will usually be a data member of that class,
+
+51
+04:33.540 --> 04:36.180
+although it could still be a global or static variable.
+
+52
+04:38.340 --> 04:44.850
+There are three main functions that we are interested in.
+The lock member function will try to lock
+
+53
+04:44.850 --> 04:45.540
+the mutex.
+
+54
+04:46.940 --> 04:50.750
+And this call will not return until the mutex has been locked.
+
+55
+04:51.620 --> 04:53.480
+So that is what is called a "blocking" call.
+
+56
+04:55.100 --> 05:01.850
+If a thread tries to unlock the mutex and some other thread has got the mutex lock on, then this thread is going
+
+57
+05:01.850 --> 05:07.670
+to be stuck waiting for the call to return, until the other thread unlocks it and the thread is able to get
+
+58
+05:07.670 --> 05:08.060
+the lock.
+
+59
+05:09.590 --> 05:14.230
+An alternative to that is the try_lock function, which will return immediately.
+
+60
+05:14.600 --> 05:16.010
+This returns a boolean.
+
+61
+05:16.460 --> 05:19.430
+If we have a lock on the mutex, the result is true.
+
+62
+05:19.910 --> 05:21.680
+Otherwise, the return value is false.
+
+63
+05:23.050 --> 05:27.400
+So that is useful if you do not want to wait an indefinite amount of time to get the lock. You could
+
+64
+05:27.440 --> 05:29.070
+do something else and then try again.
+
+65
+05:31.060 --> 05:35.920
+And then finally, the unlock member function, which does what you might expect.
+It releases the lock
+
+66
+05:35.920 --> 05:36.640
+on the mutex.
+
+67
+05:41.240 --> 05:48.860
+I have rewritten the code from the previous video to use a mutex. I have included the mutex header. I have
+
+68
+05:48.860 --> 05:57.470
+created a global mutex instance because the thread function is a global function and then, here is the critical
+
+69
+05:57.470 --> 05:59.390
+region of the thread function.
+
+70
+05:59.540 --> 06:03.230
+And before that, I have put in a call to lock the mutex.
+
+71
+06:04.160 --> 06:06.410
+And then after that I unlock the mutex.
+
+72
+06:08.760 --> 06:12.210
+So when each thread goes into this loop, it is going to try to lock the mutex.
+
+73
+06:14.610 --> 06:18.900
+When the lock call returns, that will mean the thread has [the lock on] the mutex.
+
+74
+06:20.430 --> 06:25.620
+It will mean that no other thread can execute [this code] while this critical region is being executed and then
+
+75
+06:25.620 --> 06:27.450
+it will unlock the mutex afterwards.
+
+76
+06:29.010 --> 06:30.460
+So let's see how that works.
+
+77
+06:35.150 --> 06:39.510
+There we are. It looks perfect, but as we saw, that does not necessarily prove anything.
+
+78
+06:39.530 --> 06:41.840
+So let's run it a few more times
+
+79
+06:44.630 --> 06:46.190
+and it looks through that has....
+
+80
+06:49.140 --> 06:51.090
+And it looks as though this has fixed the problem.
+
+81
+06:55.840 --> 07:01.750
+So this is what is happening. If we go back to the diagram that we had before,  I have added these locks and the
+
+82
+07:01.750 --> 07:07.410
+mutex so this is meant to be the mutex and these are the threads which are locking and unlocking it.
+
+83
+07:09.970 --> 07:17.290
+So thread one gets to run, it gets a lock on the mutex, and while thread one has a lock on the mutex,
+
+84
+07:17.350 --> 07:19.010
+no other thread can have a lock.
+
+85
+07:19.300 --> 07:22.230
+So thread one gets to write "abc" without being interrupted.
+
+86
+07:22.780 --> 07:27.130
+Then when it has finished, it unlocks the mutex, then some other thread can lock the mutex.
+
+87
+07:27.520 --> 07:31.390
+That thread can run one without being interrupted and that can write "def".
+
+88
+07:31.730 --> 07:34.170
+So we are going to get the proper output on the screen.
+
+89
+07:39.310 --> 07:42.560
+So that means that the output is no longer scrambled up.
+
+90
+07:43.480 --> 07:49.150
+We still have interleaved ordering because the threads can be scheduled to run in any order, but each
+
+91
+07:49.150 --> 07:51.380
+each thread's output is separate from the others.
+
+92
+07:51.400 --> 07:52.390
+It is not mixed up.
+
+93
+07:53.690 --> 07:59.420
+We have imposed a "happens before" relationship on the threats as they access the critical region, which
+
+94
+07:59.420 --> 08:01.060
+means they cannot interfere with each other.
+
+95
+08:05.870 --> 08:10.290
+Usually when we are using mutexes with data, we encapsulate them inside a class.
+
+96
+08:10.580 --> 08:15.680
+So, for example, if you want to have a vector, which is thread safe, we could create a class
+
+97
+08:15.680 --> 08:19.790
+which has a vector as a member and a mutex as another data member.
+
+98
+08:22.160 --> 08:29.060
+And then we have member functions which just forward to the vector's member functions, but with a lock, so
+
+99
+08:29.060 --> 08:36.470
+for example, when we call push_back on our thread safe class, this will get a lock on this mutex.
+
+100
+08:37.520 --> 08:43.610
+Then when the thread has looked the mutex, it will call the push_back member function on the vector and
+
+101
+08:43.610 --> 08:44.430
+then it will unlock it.
+
+102
+08:44.630 --> 08:46.160
+So this means that only one thread
+
+103
+08:46.430 --> 08:48.830
+can modify the vector at any one time.
+
+104
+08:49.880 --> 08:52.260
+Obviously, this is a rather simplistic example.
+
+105
+08:56.290 --> 09:03.190
+The mutex is an example of acquire and release semantics. When we lock the mutex, we acquire exclusive
+
+106
+09:03.190 --> 09:07.440
+access to the data it protects and to the critical region.
+
+107
+09:08.920 --> 09:15.010
+When we unlock the mutex, it releases the exclusive access to the data and it will also release the
+
+108
+09:15.010 --> 09:18.070
+results of any modification made to that data.
+
+109
+09:19.240 --> 09:24.610
+So the next thread which locks the mutex will acquire the results of that modification.
+
+110
+09:27.170 --> 09:32.360
+So these are acquire and release semantics are what imposes the ordering on the accesses to the variable.
+
+111
+09:33.920 --> 09:37.670
+There is no data race and the data will always be in a consistent state.
+
+112
+09:42.180 --> 09:48.270
+So we mentioned try_lock() before. This is typically how you use it. You have a loop in which you
+
+113
+09:48.270 --> 09:49.890
+keep calling try_lock().
+
+114
+09:51.900 --> 09:56.670
+If it does not get the lock, then this returns false and then you can do something else, and then
+
+115
+09:56.670 --> 09:57.880
+try again a bit later.
+
+116
+09:59.700 --> 10:03.080
+Then if the call does succeed, then it will return
+
+117
+10:03.090 --> 10:03.540
+true.
+
+118
+10:04.750 --> 10:08.710
+And you can carry on and do what... You can execute your critical region.
+
+119
+10:10.030 --> 10:13.660
+So you keep trying to get the lock in a loop until you succeed.
+
+120
+10:15.520 --> 10:17.620
+I have got some code which demonstrates this.
+
+121
+10:19.390 --> 10:23.860
+We just have the usual thread boilerplate at the top.
+
+122
+10:24.830 --> 10:27.560
+We have a mutex which both these threads are trying to lock.
+
+123
+10:30.080 --> 10:37.310
+Thread one will lock it immediately and then sleep for 500 milliseconds. Thread two will first
+
+124
+10:37.310 --> 10:38.930
+sleep and then try to get the lock.
+
+125
+10:41.560 --> 10:46.300
+It is going to keep trying to get the lock in a loop until it eventually succeeds.
+
+126
+10:47.450 --> 10:54.080
+At some point, thread one will wake up, it will unlock the mutex, and then thread two will get
+
+127
+10:54.080 --> 11:01.730
+the lock, this try_lock() call will succeed and the thread will jump out of the loop and execute its
+
+128
+11:01.730 --> 11:02.470
+critical region.
+
+129
+11:03.830 --> 11:07.360
+The main function just launches the threads and joins on them.
+
+130
+11:07.910 --> 11:08.990
+Nothing very exciting
+
+131
+11:08.990 --> 11:09.230
+there.
+
+132
+11:13.470 --> 11:18.380
+So we see task one and two both try to get the lock. Task one gets it straight away.
+
+133
+11:19.550 --> 11:25.910
+So by the time task two tries to get the lock, it's already been taken, it cannot get it, so it
+
+134
+11:25.910 --> 11:32.150
+sleeps and it tries again, sleeps, tries again, sleeps, and eventually task one releases the lock
+
+135
+11:32.600 --> 11:33.920
+and task two can get the lock.
+
+136
+11:35.380 --> 11:36.990
+Okay, so that's it for this video.
+
+137
+11:37.490 --> 11:38.430
+I'll see you next time.
+
+138
+11:38.580 --> 11:41.000
+But meanwhile, keep coding!

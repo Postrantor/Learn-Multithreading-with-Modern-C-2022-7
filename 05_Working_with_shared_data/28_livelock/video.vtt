@@ -1,0 +1,364 @@
+WEBVTT
+
+0
+00:00.180 --> 00:07.500
+Hello again. In this video, we are going to talk about livelock. Livelock is related to deadlock.
+
+1
+00:09.280 --> 00:14.870
+The difference is that when we have a livelock, all the threads are still active, whereas when we
+
+2
+00:14.920 --> 00:20.630
+have deadlock, there are some threads which are no longer active. They are waiting forever.
+
+3
+00:21.880 --> 00:24.730
+So when we have deadlock, everything grinds to a halt.
+
+4
+00:25.090 --> 00:27.490
+When we have livelock, things are still happening.
+
+5
+00:30.630 --> 00:38.370
+One of the most common causes of livelock is badly doing deadlock avoidance. If we think back to the
+
+6
+00:38.370 --> 00:44.430
+situation we had before, where we had two threads and each one was waiting to get a lock on a mutex
+
+7
+00:44.430 --> 00:47.640
+that was already locked by the other thread, that was deadlock.
+
+8
+00:49.740 --> 00:55.110
+We could try and avoid that by saying that instead of waiting for the mutex indefinitely, we are going
+
+9
+00:55.110 --> 00:59.610
+to wait with a timeout and then if we cannot get it, we are going to start all over again.
+
+10
+00:59.850 --> 01:02.940
+So we're going to release our own lock and then try and get the other thread's.
+
+11
+01:02.940 --> 01:11.850
+lock. As an analogy for this, there was a British comedy program in the 1940s, I think, certainly
+
+12
+01:11.850 --> 01:13.310
+well before even my time.
+
+13
+01:14.160 --> 01:20.330
+And one of the sketches on that was two civil servants trying to go through a door at the same time.
+
+14
+01:20.940 --> 01:22.370
+You can imagine the situation.
+
+15
+01:22.380 --> 01:27.000
+You have two people walking along a corridor side by side, and then they come to a door which is
+
+16
+01:27.000 --> 01:33.360
+only wide enough for one person, and they both try to get in, then they realize they are making a mistake
+
+17
+01:33.360 --> 01:36.770
+and they back off and say, "Oh, terribly sorry",
+"No, my mistake!"
+
+18
+01:36.780 --> 01:42.330
+"No, after you", "No, no after you" and then they wait for the other person, then they both try to go
+
+19
+01:42.330 --> 01:46.500
+through it again at the same time. Then they both back off and then they wait, then they go again.
+
+20
+01:47.840 --> 01:49.200
+A very British problem!
+
+21
+01:49.500 --> 01:51.180
+But livelock is rather like that.
+
+22
+01:54.030 --> 01:59.790
+Here is some code which will implement this. So we have the lock on mutex number
+
+23
+01:59.790 --> 02:01.040
+one in the thread number one.
+
+24
+02:01.740 --> 02:09.300
+And then instead of getting a lock guard, which will wait indefinitely to lock mutex two, we use a try
+
+25
+02:09.300 --> 02:10.250
+lock with a timeout.
+
+26
+02:11.160 --> 02:13.650
+So this will spend five milliseconds trying to get the lock.
+
+27
+02:15.000 --> 02:20.280
+And then at the end of this scope, the lock guard will be destroyed.
+
+28
+02:20.280 --> 02:25.070
+The lock on the first mutex will be released.
+And then it goes back into the loop and tries again.
+
+29
+02:25.080 --> 02:30.180
+So it locks the first mutex and then waits for the timeout for the lock on the second mutex.
+
+30
+02:31.370 --> 02:36.740
+And eventually this will succeed and in theory, this should drop out of the loop.
+
+31
+02:39.070 --> 02:43.600
+The other thread function is exactly the same, except the mutexes are the other way around.
+
+32
+02:43.840 --> 02:48.520
+So first it looks mutex two then it tries to look mutex one with a timeout.
+
+33
+02:52.640 --> 03:01.220
+So here is some code to do that. We are using a timed_mutex so we can have the time out.
+
+34
+03:03.060 --> 03:09.840
+I have added some sleeps and print messages so we can see what's happening.
+And then we lock the first
+
+35
+03:09.840 --> 03:13.320
+mutex, we try to lock the second and we do that in a loop.
+
+36
+03:16.850 --> 03:22.880
+And then we have the other thread function, which is the same, but it locks mutex two first and then
+
+37
+03:23.300 --> 03:25.280
+tries to lock mutex one with a timeout.
+
+38
+03:28.490 --> 03:30.470
+And then the main function to launch the threads.
+
+39
+03:33.100 --> 03:33.920
+So here we are.
+
+40
+03:33.940 --> 03:38.080
+They're both busy apologizing to each other and nobody actually gets through the door.
+
+41
+03:43.000 --> 03:44.080
+How can we prevent this?
+
+42
+03:44.110 --> 03:50.530
+Well, the obvious way is to use a proper deadlock avoidance technique, for example, we could
+
+43
+03:50.530 --> 03:58.600
+use the scoped lock from C++17 or the unique lock with extra arguments and the global lock function from
+
+44
+03:58.600 --> 03:59.660
+C++11.
+
+45
+04:01.030 --> 04:02.510
+I will let you try that out for yourselves.
+
+46
+04:02.530 --> 04:03.730
+It is pretty straightforward.
+
+47
+04:06.740 --> 04:12.440
+Another way to avoid livelock is to assign different priorities to the threads. The operating system
+
+48
+04:12.440 --> 04:16.610
+actually does that for us, although it is not directly supported by C++.
+
+49
+04:18.670 --> 04:25.000
+When the scheduler is deciding which thread to allow to run next, it goes by the priority of the thread,
+
+50
+04:25.450 --> 04:29.440
+so the highest priority thread will get the most opportunities to run.
+
+51
+04:30.190 --> 04:33.580
+So threads with high priority will get the most opportunities to run.
+
+52
+04:34.850 --> 04:39.860
+And threads with the lowest priorities will get the least opportunities to run. They are more likely
+
+53
+04:39.860 --> 04:43.520
+to be sleeping, or when they do run, they are more likely to be interrupted.
+
+54
+04:44.900 --> 04:51.140
+We can call the native_handle member function of the thread object, and that will give us the data
+
+55
+04:51.140 --> 04:57.850
+which we need to pass as an argument to some operating system API, and that can set the priority of
+
+56
+04:57.860 --> 04:58.280
+the thread.
+
+57
+05:00.220 --> 05:03.460
+I will not show you how to do that, because it depends on the operating system.
+
+58
+05:05.910 --> 05:08.640
+Some issues you need to think about when you are doing that.
+
+59
+05:09.420 --> 05:11.190
+One of them is priority inversion.
+
+60
+05:12.910 --> 05:17.860
+We have a high priority thread, but it needs to wait for something that is a low priority thread is
+
+61
+05:17.860 --> 05:23.440
+doing. So it is going to stop what it is doing and it is going to wait until the low priority thread has
+
+62
+05:23.440 --> 05:24.340
+done what it needs.
+
+63
+05:24.940 --> 05:28.510
+However, because the low priority thread has low priority,
+
+64
+05:28.800 --> 05:34.060
+it keeps getting interrupted by other threads which are not relevant to what we are waiting for.
+
+65
+05:36.180 --> 05:41.370
+The high priority thread is actually running at the same speed as a low priority thread, so that is
+
+66
+05:41.370 --> 05:42.960
+why it is called priority inversion.
+
+67
+05:43.260 --> 05:47.280
+We have a high priority thread, which behaves like a low priority thread.
+
+68
+05:48.920 --> 05:56.720
+Another problem is convoying. We have a high priority thread which requires a lock, which is held by
+
+69
+05:56.720 --> 05:57.910
+a low priority thread.
+
+70
+05:58.730 --> 06:03.080
+So the high priority thread cannot get that lock until the low priority thread has released it.
+
+71
+06:04.430 --> 06:10.580
+And then if the high priority thread requires another lock, which is already held by the low priority
+
+72
+06:10.580 --> 06:13.100
+thread, then it has to wait until that runs, and so on.
+
+73
+06:13.550 --> 06:16.980
+So it keeps getting, er, bumping up against the low priority thread.
+
+74
+06:17.390 --> 06:20.560
+It is like having a sports car following a slow lorry up a hill [on a narrow road].
+
+75
+06:21.320 --> 06:23.420
+It wants to go faster, but it cannot.
+
+76
+06:28.460 --> 06:33.980
+And finally, resource starvation is a more general concept which covers deadlock and livelock and
+
+77
+06:33.980 --> 06:40.820
+some other things. It means that a thread cannot get the resources which it needs to run or to continue
+
+78
+06:40.820 --> 06:41.180
+running.
+
+79
+06:42.740 --> 06:47.330
+When we have deadlock and livelock, the thread cannot acquire a lock it needs.
+
+80
+06:49.830 --> 06:55.030
+We can have situations where the operating system has resource starvation, there is not enough system
+
+81
+06:55.230 --> 07:01.410
+memory to start a new thread, or the maximum number of threads that the operating system supports have already
+
+82
+07:01.410 --> 07:02.370
+been started.
+
+83
+07:04.640 --> 07:11.150
+With low priority threads, they may get starved of processor time. Because they are low priority, they
+
+84
+07:11.150 --> 07:17.780
+do not get to run very often. Good schedulers will try and introduce some element of fairness so that
+
+85
+07:17.780 --> 07:19.880
+low priority threads do get to run occasionally.
+
+86
+07:20.090 --> 07:24.600
+But they may not be able to run fast enough to do their required work.
+
+87
+07:26.030 --> 07:27.630
+Okay, so that's it for this video.
+
+88
+07:28.130 --> 07:29.160
+I'll see you next time.
+
+89
+07:29.200 --> 07:31.070
+But meanwhile, keep coding!

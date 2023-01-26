@@ -1,0 +1,153 @@
+WEBVTT
+
+0
+00:00.150 --> 00:04.830
+Hello again! In this video, we are going to look at using promises when there are multiple waiting
+
+1
+00:04.840 --> 00:05.310
+threads.
+
+2
+00:07.210 --> 00:12.460
+We have learned how to write applications where there is one producer thread and one consumer thread, but
+
+3
+00:12.460 --> 00:17.500
+there are many applications where you need to have a single producer thread and multiple consumers.
+
+4
+00:18.880 --> 00:25.030
+We cannot do this with std::future because only one consumer can get the value from the producer.
+
+5
+00:27.700 --> 00:32.890
+The future class is designed so that it has exclusive access to the shared state with the promise.
+
+6
+00:35.060 --> 00:39.920
+Future instances cannot be copied for the same reason that unique pointers cannot be copied.
+
+7
+00:42.290 --> 00:48.260
+If more than one thread calls get() on the same future, then there is a data race because multiple threads
+
+8
+00:48.260 --> 00:52.280
+are accessing the same shared state and there is modification occurring.
+
+9
+00:54.870 --> 01:00.050
+C++ provides a shared underscore future, which is similar to a shared underscore pointer.
+
+10
+01:00.630 --> 01:05.700
+You can have multiple copies, which each have a reference to the same shared state.
+
+11
+01:05.980 --> 01:08.910
+And it also synchronizes the access to that shared state.
+
+12
+01:10.050 --> 01:14.490
+So this allows multiple consumers to wait for a result from a producer thread.
+
+13
+01:16.160 --> 01:19.580
+Typically, we would make a copy so that each thread has its own instance.
+
+14
+01:20.970 --> 01:25.020
+And provided we are doing it on different copies, we can call get() repeatedly.
+
+15
+01:28.840 --> 01:33.250
+As with the future class, we do not normally create a shared future instance directly.
+
+16
+01:34.630 --> 01:38.210
+Usually we have a future object which we convert to a shared future.
+
+17
+01:38.860 --> 01:46.420
+We can either use move to move it into the shared future,
+or we can call the share() member function of the future,
+
+18
+01:46.780 --> 01:49.600
+which will return a shared future object.
+
+19
+01:51.250 --> 01:54.490
+And we can also obtain a shared future directly from the promise.
+
+20
+01:54.790 --> 02:01.240
+If we call get_future(), that will return a future which can be moved into the shared future instance.
+
+21
+02:06.280 --> 02:11.950
+Then to write a program which has multiple consumers, we have the same producer function as before.
+
+22
+02:13.340 --> 02:18.980
+The consumer function is the same as before, except we need to use a shared future instead of a regular
+
+23
+02:18.980 --> 02:23.240
+future.
+In the main() function, we create the promise instance.
+
+24
+02:23.570 --> 02:27.200
+Then we create a shared future for each consumer thread.
+
+25
+02:28.600 --> 02:34.440
+Then we start up the consumer threads with those shared futures as argument, and we can start up the producer
+
+26
+02:34.480 --> 02:37.090
+thread,
+and of course we need to join at the end.
+
+27
+02:40.090 --> 02:46.640
+So let's try this code out. As usual, I have added some print statements so we can see what is going on.
+
+28
+02:47.260 --> 02:50.790
+We are going to have multiple consumer threads printing output at the same time.
+
+29
+02:51.040 --> 02:55.600
+So I have also put a lock guard to avoid the output getting scrambled up.
+
+30
+02:58.630 --> 03:04.670
+So we see the consumer threads run. They call get() and wait for the producer. Then the producer does
+
+31
+03:04.670 --> 03:10.810
+its thing.
+And then the consumer threads return from calling get() and they have the answer, 42, then
+
+32
+03:10.990 --> 03:11.510
+they print it out.
+
+33
+03:16.420 --> 03:18.580
+OK, so that's it for this video.
+
+34
+03:18.820 --> 03:19.720
+A nice short one!
+
+35
+03:20.050 --> 03:20.860
+I'll see you next time.
+
+36
+03:20.890 --> 03:22.720
+But meanwhile, keep coding!

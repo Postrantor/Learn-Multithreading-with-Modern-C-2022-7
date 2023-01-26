@@ -1,0 +1,262 @@
+WEBVTT
+
+0
+00:00.210 --> 00:03.570
+Hello again! In this video, we are going to talk about promises.
+
+1
+00:05.990 --> 00:12.800
+As we saw in the last video, a promise object is associated with a future object, and between them
+
+2
+00:12.830 --> 00:14.570
+they set up a shared state.
+
+3
+00:15.440 --> 00:23.090
+The promise object will set a value in the shared state and the future object can wait and then get
+
+4
+00:23.090 --> 00:24.800
+the value from the shared state.
+
+5
+00:26.910 --> 00:34.440
+So as a very rough analogy, the get() call by the future is analogous to the consumer calling the
+
+6
+00:34.470 --> 00:41.670
+producer thread and the set() operation by the promise is analogous to the producer thread returning
+
+7
+00:41.820 --> 00:43.230
+a value to the consumer thread.
+
+8
+00:43.770 --> 00:45.470
+But do not take this too seriously.
+
+9
+00:47.900 --> 00:53.510
+The future and promise are both template classes. The parameter is the type of the result that is being
+
+10
+00:53.510 --> 00:59.830
+passed from the promise to the future. The get underscore future member function will return
+
+11
+00:59.840 --> 01:07.720
+the associated future object. set underscore value will store the argument in the shared state.
+
+12
+01:08.540 --> 01:13.100
+And there is also a set underscore exception function which can be used with exceptions.
+
+13
+01:13.550 --> 01:15.400
+And we will look at that at the end of this video.
+
+14
+01:18.700 --> 01:24.880
+So here is how we would use the future and promise together. We have a producer which takes the promise
+
+15
+01:24.880 --> 01:32.920
+as argument. It generates a value and then it calls set_value and that will store the value of x in
+
+16
+01:32.920 --> 01:33.650
+the shared state.
+
+17
+01:34.330 --> 01:40.130
+We have this consumer function, which takes a future as argument. It calls get() on that future.
+
+18
+01:40.540 --> 01:46.660
+This will wait until the shared state is updated and then the function call will return and the value
+
+19
+01:46.660 --> 01:48.490
+from the shared state will be stored in x.
+
+20
+01:51.560 --> 01:57.920
+Then in the main function, we create the promise instance. We get the associated future. We start a
+
+21
+01:58.070 --> 02:03.470
+consumer thread with the future as argument and the producer thread with the promise as argument.
+
+22
+02:06.410 --> 02:08.270
+So let's see this code in action.
+
+23
+02:08.510 --> 02:13.640
+This is the same code. I have made the sleep a bit longer and added some print statements so we can see
+
+24
+02:13.640 --> 02:14.290
+what is happening.
+
+25
+02:17.250 --> 02:24.110
+The consumer thread calls get() and goes to sleep. The producer thread sets the value in the shared state.
+
+26
+02:25.590 --> 02:29.820
+The consumer thread wakes up, get() returns the new value, and then x is 42.
+
+27
+02:34.910 --> 02:42.290
+We also said that this can be used for handling exceptions. 
+The producer can store exceptions in the
+
+28
+02:42.290 --> 02:49.730
+shared state by calling the set_exception() member function on the promise. That will cause the exception
+
+29
+02:49.730 --> 02:52.890
+to be thrown in the consumer thread by the get() call.
+
+30
+02:54.500 --> 03:00.620
+So, again, using our poor analogy, the get() call by the future
+is the consumer
+
+31
+03:00.620 --> 03:06.620
+thread calling the producer. The producer throws an exception and then the set_exception will in
+
+32
+03:06.620 --> 03:09.230
+effect rethrow the exception back to the consumer.
+
+33
+03:14.100 --> 03:20.640
+If we want to do this, we put a try block in the producer around code that might throw. So that's normal.
+
+34
+03:20.910 --> 03:21.770
+In the catch block,
+
+35
+03:22.110 --> 03:23.280
+this is slightly different.
+
+36
+03:24.060 --> 03:29.310
+Normally, you would use a copy of the exception or a reference to the exception in a catch block.
+
+37
+03:30.820 --> 03:36.180
+Instead, there's a function current underscore exception which will return the active exception,
+
+38
+03:36.450 --> 03:38.310
+and we can use the return value from that.
+
+39
+03:39.680 --> 03:45.620
+Then we call the set underscore score exception member function of the promise, and that will save the active
+
+40
+03:45.620 --> 03:47.090
+exception in the shared state.
+
+41
+03:48.470 --> 03:51.090
+Then in the consumer, the get() call is going to throw.
+
+42
+03:51.110 --> 03:56.920
+So we need to put a block around that and then we write a catch block, which will handle the exception.
+
+43
+03:57.410 --> 03:58.700
+So that is fairly normal.
+
+44
+04:01.130 --> 04:08.120
+You would have some code like this. The producer will have a try block and then the catch block. We call
+
+45
+04:08.120 --> 04:13.730
+current_exception() to get the active exception, then we pass that to set underscore exception.
+
+46
+04:16.810 --> 04:23.260
+And then in the consumer, the get() call will through, we put a try block around that and then we
+
+47
+04:23.260 --> 04:25.530
+write a catch block to handle that exception.
+
+48
+04:29.400 --> 04:35.350
+So this is the same code again, with some sleeps and print statements.
+In the producer,
+
+49
+04:36.120 --> 04:37.590
+we are going to throw an exception.
+
+50
+04:40.490 --> 04:41.660
+Then we have a catch block.
+
+51
+04:43.520 --> 04:46.820
+This catch block is going to save the exception to the shared state.
+
+52
+04:49.100 --> 04:50.410
+In the consumer,
+
+53
+04:52.780 --> 04:59.950
+we have a try block around the get() call and then we have a catch block, which will handle the
+
+54
+04:59.950 --> 05:00.550
+exception.
+
+55
+05:04.720 --> 05:10.360
+So let's see how this works.
+So we call get(), then the exception is thrown.
+
+56
+05:12.950 --> 05:18.770
+(Let's change that to five seconds, actually. Give us some more time to - give me some more time to talk
+
+57
+05:18.770 --> 05:21.470
+about it)
+So the future calls get()
+
+58
+05:23.220 --> 05:28.060
+Then the producer is going to throw an exception. That exception is going to be stored in the shared
+
+59
+05:28.080 --> 05:32.070
+state, then the get() call will notice that exception.
+
+60
+05:32.190 --> 05:33.390
+It will throw the exception.
+
+61
+05:35.240 --> 05:37.190
+And then that gets caught in the handler.
+
+62
+05:43.720 --> 05:45.730
+OK, so that's it for this video.
+
+63
+05:46.570 --> 05:49.570
+I'll see you again next time, but until then, keep coding!

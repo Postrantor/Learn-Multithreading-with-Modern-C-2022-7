@@ -1,0 +1,231 @@
+WEBVTT
+
+0
+00:00.300 --> 00:03.540
+Hello there! In this video, we are going to talk about futures.
+
+1
+00:05.580 --> 00:12.870
+One of the drawbacks of the C++ thread is that it does not provide any direct way to return a value.
+
+2
+00:13.800 --> 00:19.020
+We have been using shared variables to transfer data from one thread to another.
+
+3
+00:20.130 --> 00:23.190
+However, this raises the issue of data races.
+
+4
+00:23.490 --> 00:27.780
+So we had to use locks to protect access to this variable.
+
+5
+00:29.610 --> 00:34.820
+In this section, we are moving away from threads towards higher level objects.
+
+6
+00:35.340 --> 00:40.220
+We have already looked at the condition variables which help us synchronize different threads.
+
+7
+00:40.560 --> 00:47.100
+And now we are going to look at the future and promise classes which help us transfer data between threads.
+
+8
+00:50.020 --> 00:55.750
+We can set up a shared state between a future object and a promise object, and this can be used to
+
+9
+00:55.750 --> 00:57.910
+transfer data in a thread-safe way.
+
+10
+00:58.810 --> 01:03.930
+We do not need to provide any shared data variables or any explicit locking.
+
+11
+01:04.600 --> 01:08.830
+Obviously, there will be something like that happening in the background, but we do not need to know
+
+12
+01:08.830 --> 01:09.360
+about it.
+
+13
+01:09.670 --> 01:12.070
+We can just concentrate on what our program does.
+
+14
+01:16.020 --> 01:21.570
+In the last couple of videos, we were using read and write threads. These are an example of what is known
+
+15
+01:21.570 --> 01:23.430
+as the producer-consumer model.
+
+16
+01:24.970 --> 01:30.880
+You have a thread called the producer, which generates some data or calculates a result and another
+
+17
+01:30.880 --> 01:34.780
+thread, which is the consumer, which is going to use that data.
+
+18
+01:37.480 --> 01:43.570
+We have a promise object in the producer thread, which will set the value in the shared state, so
+
+19
+01:43.570 --> 01:48.320
+that is similar to the writer thread which updated the value of a shared variable.
+
+20
+01:49.420 --> 01:52.490
+We have a consumer thread which is waiting for that data.
+
+21
+01:52.540 --> 01:56.440
+The future object is waiting for the shared state to be updated.
+
+22
+01:56.980 --> 02:01.030
+So that is similar to calling wait() in the reader thread.
+
+23
+02:02.400 --> 02:07.000
+And then when the shared state is updated, the future object will return the value.
+
+24
+02:07.380 --> 02:14.460
+So that is equivalent to the reader thread returning from wait() and being able to access the shared variable.
+
+25
+02:20.260 --> 02:24.820
+In computing, a "future" represents a value which has not been computed yet.
+
+26
+02:26.660 --> 02:33.530
+In C++ concurrency, the future class is one of the most important data structures. It is not only used
+
+27
+02:33.530 --> 02:37.940
+with the promise, it is also used in lots of asynchronous operations.
+
+28
+02:39.160 --> 02:46.390
+We do not normally create it directly. When we have a promise and a future, we create the promise first
+
+29
+02:46.630 --> 02:50.250
+and that will give us a future which is associated with it.
+
+30
+02:51.300 --> 02:56.850
+There are also other asynchronous operations which will return a future, so these operations will
+
+31
+02:56.850 --> 03:02.420
+go and run in the background and then when they finish, the future will hold the result.
+
+32
+03:05.530 --> 03:11.380
+The future class is defined in the <future> header. It is templated. The parameter is the type of the
+
+33
+03:11.380 --> 03:13.480
+value that we are going to receive.
+
+34
+03:14.530 --> 03:18.020
+It has a get() member function which will obtain the value when it is ready.
+
+35
+03:19.060 --> 03:25.390
+This member function will block until the operation is complete and then it will return,
+and the return value
+
+36
+03:25.390 --> 03:27.880
+will be the return value from the operation.
+
+37
+03:29.660 --> 03:34.940
+They are also member functions which wait without fetching. The wait() member function will block
+
+38
+03:34.940 --> 03:40.250
+until the operation is complete and there are wait_for() and wait_until() which block with a timeout.
+
+39
+03:41.430 --> 03:45.660
+If you call get() and the operation has already finished, then it willl return immediately.
+
+40
+03:46.730 --> 03:52.250
+So as an alternative to calling get(), you could call one of these member functions to see when the
+
+41
+03:52.250 --> 03:55.610
+operation is completed and then call get() to get the results immediately.
+
+42
+03:59.200 --> 04:05.530
+As we said, when you use a promise and a future together, you first create the promise.
+
+43
+04:06.040 --> 04:12.490
+So this is a promise that's going to return an int,
+and then you get the future from the promise.
+
+44
+04:12.670 --> 04:16.750
+And you do that by calling the get_future() member of the promise.
+
+45
+04:17.830 --> 04:22.780
+Futures are move-only objects, so you need to initialize them by move.
+
+46
+04:24.460 --> 04:29.470
+And once you have done this, that will set up a shared state between the promise instance and the future
+
+47
+04:29.470 --> 04:36.150
+instance, and that can be used to send a result from the promise to the future in a thread-safe way.
+
+48
+04:37.690 --> 04:42.820
+You would put this code in main() before you start the threads, and then you would start a producer
+
+49
+04:42.820 --> 04:49.120
+thread which has a reference to the promise as one of its arguments and a consumer thread which has
+
+50
+04:49.120 --> 04:51.970
+a reference to the future as one of its arguments.
+
+51
+04:52.490 --> 04:58.120
+And then in the consumer thread, when it is ready to receive the result, it will call the get() member
+
+52
+04:58.210 --> 05:04.030
+function on the future, and that will wait until the result is ready and then it will obtain it.
+
+53
+05:05.530 --> 05:07.420
+Okay, so that's it for this video.
+
+54
+05:07.660 --> 05:13.150
+In the next video, we are going to look at the promise class and then have some code which uses both
+
+55
+05:13.150 --> 05:13.620
+together.
+
+56
+05:14.590 --> 05:16.720
+But until then, keep coding!

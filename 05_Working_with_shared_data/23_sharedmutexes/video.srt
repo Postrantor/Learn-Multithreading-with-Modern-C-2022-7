@@ -1,0 +1,394 @@
+1
+00:00:00,300 --> 00:00:00,880
+Hello again.
+
+2
+00:00:01,140 --> 00:00:03,870
+In this video, we are going to look at shared mutexes.
+
+3
+00:00:05,760 --> 00:00:11,610
+So we now know how to use mutexes to make sure that only one thread can execute in a critical region
+
+4
+00:00:11,610 --> 00:00:12,570
+at any one time.
+
+5
+00:00:14,050 --> 00:00:20,470
+That is very useful, but occasionally it is a bit too restrictive.
+Let's imagine that we have a situation
+
+6
+00:00:20,740 --> 00:00:28,150
+where we have some data which is accessed for reading very frequently, but only very rarely modified.
+
+7
+00:00:29,790 --> 00:00:35,730
+If we use the techniques we have learnt so far, this means that every time a thread wants to read this
+
+8
+00:00:35,730 --> 00:00:42,660
+shared data, it has to get an exclusive lock on it and no other threads can access it, even if it is
+
+9
+00:00:42,660 --> 00:00:43,680
+just to read it.
+
+10
+00:00:46,260 --> 00:00:52,200
+So this means if we have, say, 1000 threads which read the data and only one thread which writes
+
+11
+00:00:52,200 --> 00:00:58,330
+to it, then 999 times out of 1000, we are looking the mutex when we do not need to.
+
+12
+00:00:58,590 --> 00:01:00,720
+And that is going to have a big effect on performance.
+
+13
+00:01:01,570 --> 00:01:07,020
+On the other hand, on the occasional time when there is a thread which modifies the data, then we
+
+14
+00:01:07,020 --> 00:01:11,040
+want to make sure that all the reading threads are locked out to prevent a data race.
+
+15
+00:01:11,310 --> 00:01:13,860
+So we cannot just take the mutexes off.
+
+16
+00:01:15,500 --> 00:01:21,140
+If you were using C++11, there was not very much you could do about this, at least not using standard
+
+17
+00:01:21,140 --> 00:01:28,370
+C++.
+C++14 provided a mutex which could be used for this and a type of lock.
+
+18
+00:01:29,090 --> 00:01:36,320
+C++17 improved the mutex by removing the timeout functions, which the C++14 mutex had.
+
+19
+00:01:38,110 --> 00:01:39,870
+So let's find out how all this works,
+
+20
+00:01:42,820 --> 00:01:49,400
+The C++17 shared mutex, which we are going to look at, is defined in the  header.
+
+21
+00:01:51,010 --> 00:01:54,430
+There are actually two different ways in which it can be locked.
+
+22
+00:01:54,910 --> 00:02:00,220
+The first one is exactly the same as every other mutex that we have looked at so far, which is to get
+
+23
+00:02:00,220 --> 00:02:01,180
+an exclusive lock.
+
+24
+00:02:02,050 --> 00:02:08,800
+If a thread has an exclusive lock on this mutex, then no other thread can acquire a lock until this
+
+25
+00:02:08,800 --> 00:02:10,030
+thread releases the lock.
+
+26
+00:02:11,560 --> 00:02:19,330
+There is also a shared lock. When a threat has a shared lock, any other thread can also acquire a shared
+
+27
+00:02:19,330 --> 00:02:19,930
+lock on the mutex.
+
+28
+00:02:20,470 --> 00:02:23,650
+It does not have to wait for this thread to release the lock.
+
+29
+00:02:25,550 --> 00:02:32,030
+If another thread wants to get an exclusive lock, it has to wait until all the threads which have shared
+
+30
+00:02:32,030 --> 00:02:33,310
+locks release them.
+
+31
+00:02:34,160 --> 00:02:39,550
+And also if the thread has an exclusive lock, then no one can get a shared lock until that is released.
+
+32
+00:02:43,130 --> 00:02:49,140
+To get an exclusive lock is exactly the same as the other mutexes, so we can use lock_guard, unique_lock
+
+33
+00:02:49,140 --> 00:02:50,540
+or scoped_lock as we wish.
+
+34
+00:02:51,770 --> 00:02:54,950
+This will give the thread exclusive access to the critical region.
+
+35
+00:02:55,430 --> 00:03:01,220
+Only one thread can access it. If another thread wants to access the critical region,
+
+36
+00:03:01,500 --> 00:03:05,180
+it will have to wait until this thread releases the exclusive lock.
+
+37
+00:03:07,400 --> 00:03:11,450
+There is also a shared_lock which provides shared access.
+
+38
+00:03:12,870 --> 00:03:18,210
+Any thread can share access to the critical region with other threads which also have shared locks.
+
+39
+00:03:19,290 --> 00:03:24,630
+If there is a thread which has an exclusive lock, then the thread will have to wait to acquire its shared lock.
+
+40
+00:03:27,170 --> 00:03:29,090
+So how would we use this in code?
+
+41
+00:03:29,820 --> 00:03:38,600
+We would create an instance of the shared mutex. We would create read and write task functions.
+
+42
+00:03:38,600 --> 00:03:45,110
+The write function will get an exclusive lock on the mutex, so only one thread can write to the shared data at
+
+43
+00:03:45,110 --> 00:03:45,800
+any one time.
+
+44
+00:03:46,820 --> 00:03:54,050
+The reader threads will get shared locks on the mutex so any thread can read the data provided that
+
+45
+00:03:54,050 --> 00:03:54,950
+no-one is writing to it.
+
+46
+00:03:56,310 --> 00:04:00,100
+So let's have a look at some code that does this. So here we are.
+
+47
+00:04:00,120 --> 00:04:02,510
+I have got a write task function.
+
+48
+00:04:03,840 --> 00:04:06,470
+This gets a lock guard on the mutex.
+
+49
+00:04:06,720 --> 00:04:08,820
+So this is going to acquire an exclusive look.
+
+50
+00:04:10,410 --> 00:04:15,510
+While this write task is executing its critical region, no other thread can access it.
+
+51
+00:04:17,690 --> 00:04:24,440
+The read test function takes a shared lock on the mutex, so we could have many threads executing this
+
+52
+00:04:24,450 --> 00:04:29,870
+read task at the same time. And instead of sharing data, I am just going to print out a number, which
+
+53
+00:04:29,870 --> 00:04:31,580
+depends on the threads.
+
+54
+00:04:34,030 --> 00:04:41,920
+I have included the shared_mutex header. In the main() function, I am creating lots of threads which read
+
+55
+00:04:41,920 --> 00:04:47,980
+and one thread which writes. When you want to create lots of threat objects, it is useful to put them
+
+56
+00:04:47,980 --> 00:04:48,800
+into a vector.
+
+57
+00:04:49,570 --> 00:04:54,640
+Then when you populate the vector, the thread objects cannot be copied, but they can be moved.
+
+58
+00:04:54,910 --> 00:05:00,670
+So this is going to transfer ownership of the underlying system thread from the thread object into
+
+59
+00:05:00,670 --> 00:05:01,690
+the vector element.
+
+60
+00:05:03,410 --> 00:05:10,430
+So I create some reading threads here, I create a writer thread, and then I create some more reading
+
+61
+00:05:10,430 --> 00:05:10,790
+threads.
+
+62
+00:05:11,150 --> 00:05:14,900
+And then finally I iterate over the threads and join each one.
+
+63
+00:05:15,380 --> 00:05:20,000
+I need to use the reference version of auto here because the thread objects cannot be copied.
+
+64
+00:05:21,650 --> 00:05:23,090
+Okay, so let's see how this works.
+
+65
+00:05:25,010 --> 00:05:27,140
+So we have some reading threads start up.
+
+66
+00:05:27,140 --> 00:05:30,560
+They all get a shared lock and they can all access the critical region.
+
+67
+00:05:30,920 --> 00:05:36,110
+The write thread gets an exclusive lock and now all the read threads which come afterwards have to wait.
+
+68
+00:05:38,060 --> 00:05:43,430
+And when - yes, there it is! - the write thread releases its look and then the other reading threads
+
+69
+00:05:43,580 --> 00:05:44,120
+can run.
+
+70
+00:05:45,510 --> 00:05:47,820
+And you will notice the output is slightly scrambled up.
+
+71
+00:05:50,090 --> 00:05:50,620
+OK.
+
+72
+00:05:52,810 --> 00:05:55,720
+Let's remind ourselves about the conditions for a data race.
+
+73
+00:05:56,080 --> 00:06:00,850
+I am going to keep displaying this slide until you see it in your dreams! Or perhaps that should be nightmares!!
+
+74
+00:06:02,320 --> 00:06:05,170
+So the condition for a data race is when we have:
+
+75
+00:06:06,710 --> 00:06:12,530
+two or more threads which access the same memory location and at least one of the threads modifies
+
+76
+00:06:12,530 --> 00:06:13,620
+the memory location.
+
+77
+00:06:13,850 --> 00:06:14,860
+So that is the case here.
+
+78
+00:06:15,380 --> 00:06:17,900
+We have a reading thread and writing thread.
+
+79
+00:06:19,670 --> 00:06:22,850
+These are safe only if the accesses are synchronized in some way.
+
+80
+00:06:23,390 --> 00:06:26,870
+Each access is made to happen before the next,
+
+81
+00:06:26,870 --> 00:06:28,640
+or the accesses are made atomically.
+
+82
+00:06:30,160 --> 00:06:33,970
+So how does using a shared mutex help us prevent a data race?
+
+83
+00:06:36,740 --> 00:06:44,390
+So we have these potentially conflicting reader and writer threads. The writer threat cannot get an exclusive
+
+84
+00:06:44,390 --> 00:06:50,030
+lock and execute the critical region until all the reader threads, which are currently accessing the
+
+85
+00:06:50,030 --> 00:06:52,400
+critical section, release their shared locks.
+
+86
+00:06:53,090 --> 00:06:59,210
+So this means that the accesses by these reader threads will happen before the access by the writer thread.
+
+87
+00:07:01,100 --> 00:07:08,360
+If the writing thread has an exclusive lock and reader threads want to get a shared lock, they cannot do that
+
+88
+00:07:08,360 --> 00:07:13,640
+until the writer has finished accessing the critical section and releases the exclusive lock.
+
+89
+00:07:14,420 --> 00:07:20,180
+So the access by the writing thread will happen before the access by these other reader threads.
+
+90
+00:07:21,020 --> 00:07:28,190
+So we have the reader and writer threads "happening before" the ones which could conflict. The accesses by
+
+91
+00:07:28,220 --> 00:07:33,620
+multiple reading threads do not have the happens before ordering, but that does not matter because they
+
+92
+00:07:33,620 --> 00:07:36,490
+do not modify the data, so they cannot conflict.
+
+93
+00:07:37,820 --> 00:07:44,570
+So we never have a situation in which a reader and a writer thread are executing the critical section
+
+94
+00:07:44,570 --> 00:07:45,340
+at the same time.
+
+95
+00:07:46,350 --> 00:07:49,900
+So there is no situation in which the reader and writer threads are interleaved.
+
+96
+00:07:52,530 --> 00:07:54,360
+OK, so that is it for this video.
+
+97
+00:07:54,750 --> 00:07:55,660
+I will see you next time.
+
+98
+00:07:55,710 --> 00:07:57,480
+But meanwhile, keep coding!
+
