@@ -1,8 +1,12 @@
 github/
 *.mp4
-*.tar.gz
-*.zip
-*.rar
+# *.tar.gz
+# *.zip
+# *.rar
 *.py
 *.sh
-
+*.ps1
+*.vtt
+*.srt
+.gitignore
+temp
